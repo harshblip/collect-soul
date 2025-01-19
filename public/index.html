@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>File Upload to S3</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Playfair+Display+SC:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Kanit';
+            font-weight: 400;
+            color: rgb(71, 71, 71);
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Upload File to S3</h2>
+    <form id="uploadForm">
+        <input type="file" name="file" id="fileInput" required />
+        <button type="submit">Upload</button>
+    </form>
+    <p id="response"></p>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            const formData = new FormData();
+            formData.append('file', fileInput.files);
+
+            const response = await fetch('http://localhost:3000/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            document.getElementById('response').innerText = result.message + '\\n' + (result.url || '');
+        });
+    </script>
+</body>
+
+</html>
