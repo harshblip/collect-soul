@@ -10,6 +10,7 @@ const aws = require('aws-sdk');
 const fs = require('fs');
 const multer = require('multer');
 const cors = require('cors');
+const sharp = require('sharp')
 
 console.log(process.env.USER);
 
@@ -30,51 +31,92 @@ const s3 = new aws.S3();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-app.post('/upload', upload.single('file'), async (req, res) => {
+app.post('/upload', upload.array('file'), async (req, res) => {
     const username = req.body.username;
-    const fileName = req.file.originalname;
+    const files = req.files;
+    const response = [];
 
-    
-    try {
-        const userFolderKey = `${username}/`;
-        const imageFolderKey = `${username}/${fileName}/`;
-        const fileKey = `${imageFolderKey}${fileName}`;
-        
-        const listParams = {
-            Bucket: process.env.S3_BUCKET_NAME,
-            Prefix: userFolderKey,
-            MaxKeys: 1,
-        }
-        
-        const existingFolder = await s3.listObjectsV2(listParams).promise();
-        
-        if (existingFolder.Contents.length === 0) {
-            await s3.putObject({
+    for (const file of files) {
+        try {
+            const fileName = file.originalname;
+            const userFolderKey = `${username}`;
+            const imageFolderKey = `${username}/${fileName}/`;
+            const fileKey = `${imageFolderKey}${fileName}`;
+
+            const listParams = {
                 Bucket: process.env.S3_BUCKET_NAME,
-                Key: userFolderKey,
-            }).promise();
-        }
+                Prefix: userFolderKey,
+                MaxKeys: 1,
+            }
 
-        await s3.putObject({
+            const existingFolder = await s3.listObjectsV2(listParams).promise();
+
+            if (existingFolder.Contents.length === 0) {
+                await s3.putObject({
+                    Bucket: process.env.S3_BUCKET_NAME,
+                    Key: userFolderKey,
+                }).promise();
+            }
+
+            await s3.putObject({
                 Bucket: process.env.S3_BUCKET_NAME,
                 Key: imageFolderKey,
             }).promise();
 
-        const params = {
-            Bucket: process.env.S3_BUCKET_NAME,
-            Key: fileKey,
-            Body: req.file.buffer,
-            ContentType: req.file.mimetype,
-        };
+            const originalImage = file.buffer;
+            const thumbnailImage = await sharp(originalImage).resize(150).toBuffer();
+            const displayImage = await sharp(originalImage).resize(1024).toBuffer();
 
-        s3.upload(params, (err, data) => {
-            if (err) {
-                return res.status(500).send(err);
+            const uploadOriginalImage = {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: fileKey,
+                Body: originalImage,
+                ContentType: file.mimetype
             }
-            res.status(200).send({ message: 'File uploaded successfully!', url: data.Location });
-        });
-    } catch (err) {
-        res.status(500).json({ message: "server error brooooo" })
+
+            const originalUpload = s3.upload(uploadOriginalImage).promise();
+
+            const uploadthumbnailImage = {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: fileKey,
+                Body: thumbnailImage,
+                ContentType: file.mimetype
+            }
+
+            const thumbnailUpload = s3.upload(uploadthumbnailImage).promise();
+
+            const uploaddisplayImage = {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: fileKey,
+                Body: displayImage,
+                ContentType: file.mimetype
+            }
+
+            const displayUpload = s3.upload(uploaddisplayImage).promise();
+
+            const [originalResult, thumbnailResult, displayResult] = Promise.all([
+                originalUpload,
+                thumbnailUpload,
+                displayUpload
+            ])
+
+            response.push({
+                fileName: fileName,
+                url : {
+                    originalUrl: originalResult.Location,
+                    thumbnailUrl: thumbnailResult.Location,
+                    displayUrl: displayResult.Location
+                }        
+            })
+
+            res.status(200).send({
+                message: "Files uploaded successfully !",
+                files: response
+            })
+            
+        } catch (err) {
+            res.status(500).json({ message: "server error brooooo" })
+        }
     }
 });
 
