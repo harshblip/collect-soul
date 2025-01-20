@@ -30,20 +30,52 @@ const s3 = new aws.S3();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-app.post('/upload', upload.array('file'), (req, res) => {
-    const params = {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: req.file.originalname,
-        Body: req.file.buffer,
-        ContentType: req.file.mimetype,
-    };
+app.post('/upload', upload.single('file'), async (req, res) => {
+    const username = req.body.username;
+    const fileName = req.file.originalname;
 
-    s3.upload(params, (err, data) => {
-        if (err) {
-            return res.status(500).send(err);
+    
+    try {
+        const userFolderKey = `${username}/`;
+        const imageFolderKey = `${username}/${fileName}/`;
+        const fileKey = `${imageFolderKey}${fileName}`;
+        
+        const listParams = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Prefix: userFolderKey,
+            MaxKeys: 1,
         }
-        res.status(200).send({ message: 'File uploaded successfully!', url: data.Location });
-    });
+        
+        const existingFolder = await s3.listObjectsV2(listParams).promise();
+        
+        if (existingFolder.Contents.length === 0) {
+            await s3.putObject({
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: userFolderKey,
+            }).promise();
+        }
+
+        await s3.putObject({
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: imageFolderKey,
+            }).promise();
+
+        const params = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: fileKey,
+            Body: req.file.buffer,
+            ContentType: req.file.mimetype,
+        };
+
+        s3.upload(params, (err, data) => {
+            if (err) {
+                return res.status(500).send(err);
+            }
+            res.status(200).send({ message: 'File uploaded successfully!', url: data.Location });
+        });
+    } catch (err) {
+        res.status(500).json({ message: "server error brooooo" })
+    }
 });
 
 const pool = new Pool({

@@ -31,7 +31,8 @@
             e.preventDefault();
             const fileInput = document.getElementById('fileInput');
             const formData = new FormData();
-            formData.append('file', fileInput.files);
+            formData.append('file', fileInput.files[0]);
+            formData.append('username', 'mihir')
 
             const response = await fetch('http://localhost:3000/upload', {
                 method: 'POST',
