@@ -43,7 +43,7 @@
             });
 
             const result = await response.json();
-            document.getElementById('response').innerText = result.message + '\\n' + (result.url || '');
+            document.getElementById('response').innerText = result.message + (result.files || '');
         });
     </script>
 </body>
