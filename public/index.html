@@ -36,14 +36,15 @@
                 formData.append('file', fileInput.files[i]);
             }
             formData.append('username', 'mihir')
-
+            console.log(formData)
             const response = await fetch('http://localhost:3000/upload', {
                 method: 'POST',
                 body: formData
             });
 
             const result = await response.json();
-            document.getElementById('response').innerText = result.message + (result.files || '');
+            console.log(result)
+            document.getElementById('response').innerText = result.message === null ? result.error : result.message + (result.files || '');
         });
     </script>
 </body>

@@ -11,6 +11,7 @@ const fs = require('fs');
 const multer = require('multer');
 const cors = require('cors');
 const sharp = require('sharp')
+const upload = require('./upload')
 
 console.log(process.env.USER);
 
@@ -27,9 +28,6 @@ aws.config.update({
 });
 
 const s3 = new aws.S3();
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
 
 app.post('/upload', upload.array('file'), async (req, res) => {
     const username = req.body.username;
@@ -56,67 +54,81 @@ app.post('/upload', upload.array('file'), async (req, res) => {
             }).promise();
         }
 
-
         for (const file of files) {
 
             const fileName = file.originalname;
-            const imageFolderKey = `${username}/${fileName}/`;
-            const fileKey = `${imageFolderKey}${fileName}`;
-            const originalImage = file.buffer;
+            const mediaFolderKey = `${username}/${fileName}/`;
+            const fileKey = `${mediaFolderKey}${fileName}`;
 
             await s3.putObject({
                 Bucket: process.env.S3_BUCKET_NAME,
-                Key: imageFolderKey,
+                Key: mediaFolderKey,
             }).promise();
 
-            const thumbnailImage = await sharp(file.buffer)
-                .resize(150)
-                .webp({ quality: 80 })
-                .toBuffer()
-            const displayImage = await sharp(file.buffer)
-                .resize(800)
-                .webp({ quality: 90 })
-                .toBuffer()
-
-            const uploadOriginalImage = {
-                Bucket: process.env.S3_BUCKET_NAME,
-                Key: fileKey,
-                Body: originalImage,
-                ContentType: file.mimetype
-            }
-
-            const originalUpload = s3.upload(uploadOriginalImage).promise();
-
-            const tfileKey = `${imageFolderKey}${fileName}_thumbnail.webp`;
-            const uploadthumbnailImage = {
-                Bucket: process.env.S3_BUCKET_NAME,
-                Key: tfileKey,
-                Body: thumbnailImage,
-                ContentType: 'image/webp'
-            }
-
-            const thumbnailUpload = await s3.upload(uploadthumbnailImage).promise();
-            // console.log(thumbnailUpload)
-
-            const dfileKey = `${imageFolderKey}${fileName}_display.webp`;
-            const uploaddisplayImage = {
-                Bucket: process.env.S3_BUCKET_NAME,
-                Key: dfileKey,
-                Body: displayImage,
-                ContentType: 'image/webp'
-            }
-
-            const displayUpload = await s3.upload(uploaddisplayImage).promise();
-
-            response.push({
-                fileName: fileName,
-                url: {
-                    originalUrl: originalUpload.Location,
-                    thumbnailUrl: thumbnailUpload.Location,
-                    displayUrl: displayUpload.Location
+            if (file.mimetype.startsWith('video/')) {
+                const originalVideo = file.buffer;
+                const uploadVideo = {
+                    Bucket: process.env.S3_BUCKET_NAME,
+                    Key: fileKey,
+                    Body: originalVideo,
+                    ContentType: file.mimetype
                 }
-            })
+                console.log("uploading video")
+                const video = await s3.upload(uploadVideo).promise();
+                res.status(200).json({
+                    message: "video successfully uploaded",
+                    url: video.Location
+                })
+            } else {
+                const originalImage = file.buffer;
 
+                const thumbnailImage = await sharp(file.buffer)
+                    .resize(150)
+                    .webp({ quality: 80 })
+                    .toBuffer()
+                const displayImage = await sharp(file.buffer)
+                    .resize(800)
+                    .webp({ quality: 90 })
+                    .toBuffer()
+
+                const uploadOriginalImage = {
+                    Bucket: process.env.S3_BUCKET_NAME,
+                    Key: fileKey,
+                    Body: originalImage,
+                    ContentType: file.mimetype
+                }
+
+                const originalUpload = s3.upload(uploadOriginalImage).promise();
+
+                const tfileKey = `${mediaFolderKey}${fileName}_thumbnail.webp`;
+                const uploadthumbnailImage = {
+                    Bucket: process.env.S3_BUCKET_NAME,
+                    Key: tfileKey,
+                    Body: thumbnailImage,
+                    ContentType: 'image/webp'
+                }
+
+                const thumbnailUpload = await s3.upload(uploadthumbnailImage).promise();
+                // console.log(thumbnailUpload)
+
+                const dfileKey = `${mediaFolderKey}${fileName}_display.webp`;
+                const uploaddisplayImage = {
+                    Bucket: process.env.S3_BUCKET_NAME,
+                    Key: dfileKey,
+                    Body: displayImage,
+                    ContentType: 'image/webp'
+                }
+
+                const displayUpload = await s3.upload(uploaddisplayImage).promise();
+                response.push({
+                    fileName: fileName,
+                    url: {
+                        originalUrl: originalUpload.Location,
+                        thumbnailUrl: thumbnailUpload.Location,
+                        displayUrl: displayUpload.Location
+                    }
+                })
+            }
         }
         res.status(200).send({
             message: "Files uploaded successfully !",
