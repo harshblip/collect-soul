@@ -13,6 +13,7 @@
     "@aws-sdk/client-s3": "^3.729.0",
     "@aws-sdk/lib-storage": "^3.729.0",
     "aws-sdk": "^2.1692.0",
+    "bcrypt": "^5.1.1",
     "express": "^4.21.2",
     "formidable": "^3.5.2",
     "multer": "^1.4.5-lts.1",

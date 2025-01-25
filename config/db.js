@@ -5,7 +5,7 @@ const pool = new Pool({
     host: 'localhost',
     database: 'collect',
     password: `${process.env.password}`,
-    port: `${process.env.port}`,
+    port: `${process.env.port}`
 })
 
 module.exports = pool;
