@@ -3,13 +3,10 @@ const bcrypt = require('bcrypt')
 
 const getUsers = async (email) => {
     try {
-        if (!email) {
-            return res.status(400).json({ message: "email is needed" })
-        }
         const query = `select * from users where email = $1`;
         const result = await pool.query(query, [email]);
         const ans = result.rows[0];
-
+        console.log("getUsers", ans);
         return ans;
     } catch (err) {
         console.error(err);
@@ -51,9 +48,9 @@ const loginUser = async (req, res) => {
             const passwordCheck = await bcrypt.compare(password, ans.password_hash);
             if (passwordCheck) {
                 res.status(200).json({ message: "user logged in successfully" })
-            } else[
+            } else {
                 res.status(404).json({ message: "password does not match" })
-            ]
+            }
         } else {
             res.status(404).json({ message: "no such account found. try signing up" })
         }
@@ -72,11 +69,11 @@ const deleteUser = async (req, res) => {
         const query = `delete from users where email = $1`;
         pool.query(query, [email]);
         const checkDelete = await getUsers(email);
-
-        if(checkDelete.rowCount === 0){
-            res.status(200).json({message: "account deleted successfully"});
-        }else {
-            res.status(404).json({message: "error while deleting user record"})
+        console.log(checkDelete)
+        if (checkDelete) {
+            res.status(204).json({ message: "account deleted successfully" });
+        } else {
+            res.status(404).json({ message: "error while deleting user record" })
         }
     } catch (err) {
         console.error(err);
@@ -84,8 +81,24 @@ const deleteUser = async (req, res) => {
     }
 }
 
-const updateUser = async(req, res) => {
-    // const 
+const updateUser = async (req, res) => {
+    const { username, email, password, id } = req.body;
+    try {
+        if (!username || !email || !password || !id) {
+            return res.status(404).json({ message: "please send all of the parameters" })
+        }
+        const query = `update users set username = $1, email = $2, password_hash = $3 where id = $4`;
+        const check = await pool.query(query, [username, email, password, id]);
+        console.log("check", check);
+        if(check.rowCount === 1){
+            res.status(200).json({message: "account successfully updated"})
+        }else {
+            res.status(404).json({message: "no such account found"})
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "server error" })
+    }
 }
 
-module.exports = { getUsers, createUsers, loginUser, deleteUser }
+module.exports = { getUsers, createUsers, loginUser, deleteUser, updateUser }
