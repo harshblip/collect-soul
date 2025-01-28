@@ -11,7 +11,6 @@ const getUsers = async (email) => {
     } catch (err) {
         console.error(err);
     }
-
 }
 
 const createUsers = async (req, res) => {

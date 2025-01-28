@@ -17,10 +17,37 @@ router.post('/signup', [
     await createUsers(req, res);
 })
 
-router.delete('/delete', deleteUser)
+router.delete('/delete', [
+    query('email').trim().isEmail().withMessage("email is not valid")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        res.status(400).json({ message: error[0].msg })
+    }
+    await deleteUser(req, res);
+})
 
-router.patch('/update', updateUser)
+router.patch('/update', [
+    body('email').trim().isEmail().withMessage("email is not valid")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        res.status(400).json({ message: error[0].msg })
+    }
+    await updateUser(req, res);
+})
 
-router.get('/login', loginUser)
+router.get('/login', [
+    query('email').trim().isEmail().withMessage("email is not valid"),
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        res.status(400).json({ message: error[0].msg })
+    }
+    await loginUser(req, res);
+})
 
 module.exports = router;
