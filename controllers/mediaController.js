@@ -14,6 +14,7 @@ const s3 = new aws.S3();
 const postMedia = (req, res) => {
     try {
         upload.array('file')(req, res, async (err) => {
+            const { id } = req.body; // supposed to add this in the frontend
             const username = req.body.username;
             const files = req.files;
             const response = [];
@@ -116,8 +117,9 @@ const postMedia = (req, res) => {
                         }
                     })
 
-                    const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size) values ($1, $2, $3, $4, $5)`
-                    const result = await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size]);
+                    const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
+                    const result = await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size, 3]);
+                    // replace the last parameter with real user_id
                     console.log(result);
                 }
             }
@@ -131,8 +133,57 @@ const postMedia = (req, res) => {
     }
 }
 
-const getImages = (req, res) => {
+const getImages = async (req, res) => {
+    const { id } = req.query;
+    try {
+        if (!id) {
+            return res.status(400).json({ message: "userid is needed to get their images" })
+        }
+        const query = `select * from images where user_id = $1`;
+        const result = await pool.query(query, [id]);
+        console.log(result.rows)
+        res.status(200).json({ message: "images retrieved", images: result.rows })
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "server error" })
+    }
 
+
+}
+
+const deleteMedia = async (req, res) => {
+    const { username, fileName, id } = req.query;
+    try {
+        const filePath = `${username}/${fileName}/`;
+
+        const listParams = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Prefix: filePath
+        }
+
+        const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+        if (!listedObjects.Contents.length) {
+            return res.status(404).json({ message: 'Folder not found or already deleted' });
+        }
+
+        const deleteParam = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Delete: {
+                Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
+            }
+        }
+
+        await s3.deleteObjects(deleteParam).promise();
+
+        const query = `delete from images where id = $1`;
+        pool.query(query, [id]);
+
+        res.status(204).json({message: "image deleted successfully !"})
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "server error" })
+    }
 }
 
 const getImageByFolder = (req, res) => {
@@ -144,7 +195,7 @@ const getVideos = (req, res) => {
 }
 
 const getVideosByFolder = (req, res) => {
-    
+
 }
 
-module.exports = { postMedia };
+module.exports = { postMedia, getImages, deleteMedia };
