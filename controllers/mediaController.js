@@ -1,6 +1,7 @@
 const aws = require('aws-sdk');
 const sharp = require('sharp')
 const upload = require('../fileChecker');
+const pool = require('../config/db')
 
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -60,7 +61,7 @@ const postMedia = (req, res) => {
                         Body: originalVideo,
                         ContentType: file.mimetype
                     }
-                    
+
                     const video = await s3.upload(uploadVideo).promise();
                     res.status(200).json({
                         message: "video successfully uploaded",
@@ -85,7 +86,7 @@ const postMedia = (req, res) => {
                         ContentType: file.mimetype
                     }
 
-                    const originalUpload = s3.upload(uploadOriginalImage).promise();
+                    const originalUpload = await s3.upload(uploadOriginalImage).promise();
 
                     const tfileKey = `${mediaFolderKey}${fileName}_thumbnail.webp`;
                     const uploadthumbnailImage = {
@@ -114,6 +115,10 @@ const postMedia = (req, res) => {
                             displayUrl: displayUpload.Location
                         }
                     })
+
+                    const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size) values ($1, $2, $3, $4, $5)`
+                    const result = await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size]);
+                    console.log(result);
                 }
             }
             res.status(200).send({
@@ -124,6 +129,22 @@ const postMedia = (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "server error brooooo" })
     }
+}
+
+const getImages = (req, res) => {
+
+}
+
+const getImageByFolder = (req, res) => {
+
+}
+
+const getVideos = (req, res) => {
+
+}
+
+const getVideosByFolder = (req, res) => {
+    
 }
 
 module.exports = { postMedia };
