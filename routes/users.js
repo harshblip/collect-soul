@@ -5,10 +5,10 @@ const { body, query, validationResult } = require('express-validator')
 const { createUsers, loginUser, deleteUser, updateUser } = require('../controllers/userController')
 
 router.post('/signup', [
-    body('username').trim().isAlpha().isLength({ min: 6 }).withMessage("username must be atleast 6 characters long"),
-    body('email').trim().isEmail().withMessage("email is not valid"),
-    body('password').trim().isLength({ min: 6 }).withMessage("password must atleast be 6 char long")
-], async (req, res) => {
+    body('username').trim().escape().isAlpha().isLength({ min: 6 }).withMessage("username must be atleast 6 characters long"),
+    body('email').trim().escape().isEmail().withMessage("email is not valid"),
+    body('password').trim().escape().isLength({ min: 6 }).withMessage("password must atleast be 6 char long")
+], async (req, res) => {    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const errArray = errors.array();
@@ -18,7 +18,7 @@ router.post('/signup', [
 })
 
 router.delete('/delete', [
-    query('email').trim().isEmail().withMessage("email is not valid")
+    query('email').trim().escape().isEmail().withMessage("email is not valid")
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -29,7 +29,7 @@ router.delete('/delete', [
 })
 
 router.patch('/update', [
-    body('email').trim().isEmail().withMessage("email is not valid")
+    body('email').trim().escape().isEmail().withMessage("email is not valid")
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -40,7 +40,7 @@ router.patch('/update', [
 })
 
 router.get('/login', [
-    query('email').trim().isEmail().withMessage("email is not valid"),
+    query('email').trim().escape().isEmail().withMessage("email is not valid"),
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
