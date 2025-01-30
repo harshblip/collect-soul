@@ -179,7 +179,7 @@ const deleteMedia = async (req, res) => {
         const query = `delete from images where id = $1`;
         pool.query(query, [id]);
 
-        res.status(204).json({message: "image deleted successfully !"})
+        res.status(204).json({ message: "image deleted successfully !" })
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "server error" })
@@ -190,12 +190,23 @@ const getImageByFolder = (req, res) => {
 
 }
 
-const getVideos = (req, res) => {
-
+const getVideos = async (req, res) => {
+    const { id } = req.query;
+    try {
+        if (!id) {
+            return res.status(404).json({ message: "user id is missing" })
+        }
+        const query = `select * from videos where user_id = $1`;
+        const result = await pool.query(query, [id]);
+        res.status(200).json({ message: "videos retrieved", videos: result.rows })
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ messaage: "server error" })
+    }
 }
 
 const getVideosByFolder = (req, res) => {
 
 }
 
-module.exports = { postMedia, getImages, deleteMedia };
+module.exports = { postMedia, getImages, deleteMedia, getVideos };

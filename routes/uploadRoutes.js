@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { body, query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, deleteMedia } = require('../controllers/mediaController')
+const { postMedia, getImages, getVideos, deleteMedia } = require('../controllers/mediaController')
 
 router.get('/getImages', [
     query('id').trim().escape().isNumeric().withMessage("id should be a number")
@@ -17,6 +17,21 @@ router.get('/getImages', [
     }
 
     await getImages(req, res);
+
+})
+
+router.get('/getVideos', [
+    query('id').trim().escape().isNumeric().withMessage("id should be a number")
+], async (req, res) => {
+    const error = validationResult(req);
+    const errors = error.array();
+
+    if (!error.isEmpty()) {
+        const errArray = errors.array();
+        return res.status(400).json({ message: errArray[0].msg })
+    }
+
+    await getVideos(req, res);
 
 })
 
