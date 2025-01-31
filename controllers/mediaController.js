@@ -1,6 +1,6 @@
 const aws = require('aws-sdk');
 const sharp = require('sharp')
-const upload = require('../fileChecker');
+const upload = require('../middlewares/fileChecker');
 const pool = require('../config/db')
 
 aws.config.update({
@@ -147,7 +147,6 @@ const getImages = async (req, res) => {
         console.error(err);
         res.status(500).json({ message: "server error" })
     }
-
 
 }
 

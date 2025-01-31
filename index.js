@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser')
 const cors = require('cors');
 const uploadRoutes = require('./routes/uploadRoutes')
 const userRoutes = require('./routes/users')
@@ -17,6 +18,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }))
+app.use(cookieParser());
 
 app.use('/upload', uploadRoutes);
 app.use('/user', userRoutes);

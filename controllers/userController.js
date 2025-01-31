@@ -1,5 +1,6 @@
 const pool = require('../config/db')
 const bcrypt = require('bcrypt')
+const jwt = require('jsonwebtoken');
 
 const getUsers = async (email) => {
     try {
@@ -46,7 +47,16 @@ const loginUser = async (req, res) => {
         if (ans) {
             const passwordCheck = await bcrypt.compare(password, ans.password_hash);
             if (passwordCheck) {
-                res.status(200).json({ message: "user logged in successfully" })
+                const access_token = jwt.sign({ email: email }, `${process.env.ACCESS_SECRET}`, { expiresIn: '2m' })
+                const refresh_token = jwt.sign({ email: email }, `${process.env.REFRESH_SECRET}`, { expiresIn: '1d' });
+
+                res.cookie('refreshToken', refresh_token, {
+                    httpOnly: true,
+                    // secure: true,
+                    sameSite: 'Strict'
+                })
+
+                res.status(200).json({ message: "user logged in successfully", access_token })
             } else {
                 res.status(404).json({ message: "password does not match" })
             }
@@ -89,10 +99,10 @@ const updateUser = async (req, res) => {
         const query = `update users set username = $1, email = $2, password_hash = $3 where id = $4`;
         const check = await pool.query(query, [username, email, password, id]);
         console.log("check", check);
-        if(check.rowCount === 1){
-            res.status(200).json({message: "account successfully updated"})
-        }else {
-            res.status(404).json({message: "no such account found"})
+        if (check.rowCount === 1) {
+            res.status(200).json({ message: "account successfully updated" })
+        } else {
+            res.status(404).json({ message: "no such account found" })
         }
     } catch (err) {
         console.error(err);

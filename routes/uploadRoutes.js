@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const auth = require('../middlewares/authMiddleware')
 
 const { body, query, validationResult } = require('express-validator')
 
 const { postMedia, getImages, getVideos, deleteMedia } = require('../controllers/mediaController')
 
-router.get('/getImages', [
+router.get('/getImages', auth, [
     query('id').trim().escape().isNumeric().withMessage("id should be a number")
 ], async (req, res) => {
     const error = validationResult(req);
