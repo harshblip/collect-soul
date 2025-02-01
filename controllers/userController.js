@@ -51,7 +51,7 @@ const loginUser = async (req, res) => {
                 const refresh_token = jwt.sign({ email: email }, `${process.env.REFRESH_SECRET}`, { expiresIn: '1d' });
 
                 res.cookie('refreshToken', refresh_token, {
-                    httpOnly: true,
+                    httpOnly: true, 
                     // secure: true,
                     sameSite: 'Strict'
                 })

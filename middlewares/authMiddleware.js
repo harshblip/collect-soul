@@ -4,8 +4,8 @@ const ACCESS_SECRET = process.env.ACCESS_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 
 const authenticateToken = (req, res, next) => {
-    const authHeader = req.header['Authorization'];
-    const token = authHeader && authHeader.split('')[1];
+    const token = req.headers.authorization?.split(' ')[1];
+    console.log(token)
 
     if (!token) {
         return res.status(401).json({ message: 'Access token missing' });
@@ -38,6 +38,7 @@ const authenticateToken = (req, res, next) => {
                 return next();
             })
         } else {
+            console.log(err)
             return res.status(403).json({ message: "invalid access token" })
         }
     })
