@@ -40,19 +40,27 @@ const createUsers = async (req, res) => {
 }
 
 const loginUser = async (req, res) => {
-    const { email, password } = req.query;
+    const { id, email, password } = req.query;
     const ans = await getUsers(email);
     console.log("ans", ans);
     try {
         if (ans) {
             const passwordCheck = await bcrypt.compare(password, ans.password_hash);
+            const payload = {
+                email: email,
+                id: id
+            }
             if (passwordCheck) {
-                const access_token = jwt.sign({ email: email }, `${process.env.ACCESS_SECRET}`, { expiresIn: '2m' })
-                const refresh_token = jwt.sign({ email: email }, `${process.env.REFRESH_SECRET}`, { expiresIn: '1d' });
+                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '2m' })
+                const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '1d' });
+
+                const payload = access_token.split('.')[1]
+                const decodedPayload = JSON.parse(atob(payload));
+                console.log(decodedPayload);
 
                 res.cookie('refreshToken', refresh_token, {
-                    httpOnly: true, 
-                    // secure: true,
+                    httpOnly: true,
+                    // secure: true,    
                     sameSite: 'Strict'
                 })
 
@@ -65,7 +73,18 @@ const loginUser = async (req, res) => {
         }
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "server error" })
+        res.status(500).json({ message: err.message })
+    }
+}
+
+const logoutUser = async (req, res) => {
+    try {
+        //  secure: true // write this fro when hosting the backend
+        res.clearCookie("refreshToken", { httpOnly: true, sameSite: 'Strict' })
+        res.status(200).json({ message: "logout successful" })
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: err.message })
     }
 }
 
@@ -86,7 +105,7 @@ const deleteUser = async (req, res) => {
         }
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "server error" })
+        res.status(500).json({ message: err.message })
     }
 }
 
@@ -106,8 +125,8 @@ const updateUser = async (req, res) => {
         }
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "server error" })
+        res.status(500).json({ message: err.name })
     }
 }
 
-module.exports = { getUsers, createUsers, loginUser, deleteUser, updateUser }
+module.exports = { getUsers, createUsers, loginUser, deleteUser, updateUser, logoutUser }

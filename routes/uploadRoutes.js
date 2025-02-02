@@ -53,6 +53,6 @@ router.delete('/deleteMedia', [
 
 })
 
-router.post('/', postMedia)
+router.post('/', auth, postMedia)
 
 module.exports = router;

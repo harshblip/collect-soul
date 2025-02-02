@@ -129,7 +129,7 @@ const postMedia = (req, res) => {
             })
         })
     } catch (err) {
-        res.status(500).json({ message: "server error brooooo" })
+        res.status(500).json({ message: err.message })
     }
 }
 
@@ -145,7 +145,7 @@ const getImages = async (req, res) => {
         res.status(200).json({ message: "images retrieved", images: result.rows })
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "server error" })
+        res.status(500).json({ message: err.message })
     }
 
 }
@@ -181,7 +181,7 @@ const deleteMedia = async (req, res) => {
         res.status(204).json({ message: "image deleted successfully !" })
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "server error" })
+        res.status(500).json({ message: err.message })
     }
 }
 
@@ -200,7 +200,7 @@ const getVideos = async (req, res) => {
         res.status(200).json({ message: "videos retrieved", videos: result.rows })
     } catch (err) {
         console.error(err);
-        res.status(500).json({ messaage: "server error" })
+        res.status(500).json({ messaage: err.message })
     }
 }
 
