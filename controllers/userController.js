@@ -53,11 +53,7 @@ const loginUser = async (req, res) => {
             if (passwordCheck) {
                 const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '2m' })
                 const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '1d' });
-
-                const payload = access_token.split('.')[1]
-                const decodedPayload = JSON.parse(atob(payload));
-                console.log(decodedPayload);
-
+                
                 res.cookie('refreshToken', refresh_token, {
                     httpOnly: true,
                     // secure: true,    
@@ -89,13 +85,13 @@ const logoutUser = async (req, res) => {
 }
 
 const deleteUser = async (req, res) => {
-    const { email } = req.query;
+    const { id, email } = req.query;
     try {
-        if (!email) {
-            return res.status(404).json({ message: "email is required to delete an account" })
+        if (!id) {
+            return res.status(404).json({ message: "id is required to delete an account" })
         }
-        const query = `delete from users where email = $1`;
-        pool.query(query, [email]);
+        const query = `delete from users where user_id = $1`;
+        pool.query(query, [id]);
         const checkDelete = await getUsers(email);
         console.log(checkDelete)
         if (checkDelete) {

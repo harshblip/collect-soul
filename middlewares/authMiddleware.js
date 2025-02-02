@@ -10,7 +10,11 @@ const authenticateToken = (req, res, next) => {
 
     const payload = token.split('.')[1]
     const decodedPayload = JSON.parse(atob(payload));
-    console.log(decodedPayload);
+    console.log(decodedPayload.id);
+
+    if (id !== decodedPayload.id) {
+        return res.status(403).json({ message: "You are not authorized to perform this action." })
+    }
 
     if (!token) {
         return res.status(401).json({ message: 'Access token missing' });

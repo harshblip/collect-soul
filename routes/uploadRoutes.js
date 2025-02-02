@@ -21,7 +21,7 @@ router.get('/getImages', auth, [
 
 })
 
-router.get('/getVideos', [
+router.get('/getVideos', auth, [
     query('id').trim().escape().isNumeric().withMessage("id should be a number")
 ], async (req, res) => {
     const error = validationResult(req);
@@ -36,7 +36,7 @@ router.get('/getVideos', [
 
 })
 
-router.delete('/deleteMedia', [
+router.delete('/deleteMedia', auth, [
     query('username').trim().escape().isAlpha().withMessage("username should be text format"),
     query('fileName').trim().escape().isAlpha().withMessage("fileName should be text format"),
     query('id').trim().escape().isNumeric().withMessage("id should be a number")
@@ -53,6 +53,18 @@ router.delete('/deleteMedia', [
 
 })
 
-router.post('/', auth, postMedia)
+router.post('/', auth, [
+    body('id').trim().escape().isNumeric().withMessage("id should be a number")
+], async (req, res) => {
+    const error = validationResult(req);
+    const errors = error.array();
+
+    if (!error.isEmpty()) {
+        const errArray = errors.array();
+        return res.status(400).json({ message: errArray[0].msg })
+    }
+
+    postMedia(req, res);
+})
 
 module.exports = router;
