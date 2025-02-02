@@ -151,7 +151,7 @@ const getImages = async (req, res) => {
 }
 
 const deleteMedia = async (req, res) => {
-    const { username, fileName, id } = req.query;
+    const { username, fileName, imageId } = req.query;
     try {
         const filePath = `${username}/${fileName}/`;
 
@@ -176,7 +176,7 @@ const deleteMedia = async (req, res) => {
         await s3.deleteObjects(deleteParam).promise();
 
         const query = `delete from images where id = $1`;
-        pool.query(query, [id]);
+        pool.query(query, [imageId]);
 
         res.status(204).json({ message: "image deleted successfully !" })
     } catch (err) {

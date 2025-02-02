@@ -37,16 +37,17 @@ router.get('/getVideos', auth, [
 })
 
 router.delete('/deleteMedia', auth, [
-    query('username').trim().escape().isAlpha().withMessage("username should be text format"),
-    query('fileName').trim().escape().isAlpha().withMessage("fileName should be text format"),
-    query('id').trim().escape().isNumeric().withMessage("id should be a number")
+    query('username').trim().escape().isAlpha().withMessage("username should be in text format"),
+    query('fileName').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("fileName should be in text format"),
+    query('imageId').trim().escape().isInt().withMessage("imageId should be a number"),
+    query('id').trim().escape().isInt().withMessage("id should be a number")
 ], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();
-
+    console.log(errors)
     if (!error.isEmpty()) {
-        const errArray = errors.array();
-        return res.status(400).json({ message: errArray[0].msg })
+        // const errArray = errors.array();
+        return res.status(400).json({ message: errors[0].msg })
     }
 
     await deleteMedia(req, res);
