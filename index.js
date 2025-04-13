@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser')
 const cors = require('cors');
 const uploadRoutes = require('./routes/uploadRoutes')
 const userRoutes = require('./routes/users')
+const limiter = require('./middlewares/rateLimiter')
 
 const app = express();
 const port = 3000;

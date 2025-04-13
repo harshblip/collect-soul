@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { body, query, validationResult } = require('express-validator')
-
 const { createUsers, loginUser, deleteUser, updateUser } = require('../controllers/userController')
 const auth = require('../middlewares/authMiddleware')
+const limiter = require('../middlewares/rateLimiter')
 
 router.post('/signup', [
     body('username').trim().escape().isAlpha().isLength({ min: 6 }).withMessage("username must be atleast 6 characters long"),
@@ -42,7 +42,7 @@ router.patch('/update', auth, [
     await updateUser(req, res);
 })
 
-router.get('/login', [
+router.get('/login', limiter, [
     query('email').trim().escape().isEmail().withMessage("email is not valid"),
 ], async (req, res) => {
     const errors = validationResult(req);
