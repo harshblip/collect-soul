@@ -42,7 +42,7 @@ router.patch('/update', auth, [
     await updateUser(req, res);
 })
 
-router.get('/login', [
+router.get('/login', limiter, [
     query('email').trim().escape().isEmail().withMessage("email is not valid"),
 ], async (req, res) => {
     const errors = validationResult(req);
