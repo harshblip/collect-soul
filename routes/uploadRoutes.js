@@ -7,7 +7,7 @@ const { body, query, validationResult } = require('express-validator')
 const { postMedia, getImages, getVideos, deleteMedia } = require('../controllers/mediaController');
 const limiter = require('../middlewares/rateLimiter');
 
-router.get('/getImages', limiter, auth, [
+router.get('/getImages', auth, [
     query('id').trim().escape().isNumeric().withMessage("id should be a number")
 ], async (req, res) => {
     const error = validationResult(req);

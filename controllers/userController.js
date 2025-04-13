@@ -40,7 +40,7 @@ const createUsers = async (req, res) => {
 }
 
 const loginUser = async (req, res) => {
-    const { id, email, password } = req.query;
+    const { email, password } = req.query;
     const ans = await getUsers(email);
     console.log("ans", ans);
     try {
@@ -48,12 +48,13 @@ const loginUser = async (req, res) => {
             const passwordCheck = await bcrypt.compare(password, ans.password_hash);
             const payload = {
                 email: email,
-                id: id
+                id: ans.id
             }
+            // console.log(payload)
             if (passwordCheck) {
                 const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '2m' })
                 const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '1d' });
-                
+
                 res.cookie('refreshToken', refresh_token, {
                     httpOnly: true,
                     // secure: true,    

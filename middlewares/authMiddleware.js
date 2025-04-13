@@ -4,17 +4,8 @@ const ACCESS_SECRET = process.env.ACCESS_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 
 const authenticateToken = (req, res, next) => {
-    const { id } = req.query;
     const token = req.headers.authorization?.split(' ')[1];
     console.log(token)
-
-    const payload = token.split('.')[1]
-    const decodedPayload = JSON.parse(atob(payload));
-    console.log(decodedPayload.id);
-
-    if (id !== decodedPayload.id) {
-        return res.status(403).json({ message: "You are not authorized to perform this action." })
-    }
 
     if (!token) {
         return res.status(401).json({ message: 'Access token missing' });
@@ -48,7 +39,7 @@ const authenticateToken = (req, res, next) => {
             })
         } else {
             console.log(err)
-            return res.status(403).json({ message: "invalid access token" })
+            return res.status(403).json({ message: "You are not authorized to perform this action" })
         }
     })
 }
