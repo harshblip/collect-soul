@@ -71,7 +71,7 @@ const postMedia = (req, res) => {
                         headers: {
                             'Content-Type': file.mimetype
                         }
-                    })
+                    })/
 
                     res.status(200).json({
                         message: "video successfully uploaded",

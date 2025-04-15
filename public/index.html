@@ -25,6 +25,7 @@
         <button type="submit">Upload</button>
     </form>
     <p id="response"></p>
+    <p id="video-url"></p>
 
     <script>
         document.getElementById('uploadForm').addEventListener('submit', async (e) => {
@@ -38,7 +39,7 @@
             formData.append('username', 'mihir')
             console.log(formData)
             const response = await fetch('http://localhost:3000/upload', {
-                method: 'POST',
+                method: 'PUT',
                 body: formData
             });
 

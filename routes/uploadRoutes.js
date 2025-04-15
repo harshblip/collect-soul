@@ -55,18 +55,14 @@ router.delete('/deleteMedia', auth, [
 
 })
 
-router.post('/', auth, [
-    body('id').trim().escape().isNumeric().withMessage("id should be a number")
-], async (req, res) => {
-    const error = validationResult(req);
-    const errors = error.array();
-
-    if (!error.isEmpty()) {
-        const errArray = errors.array();
-        return res.status(400).json({ message: errArray[0].msg })
-    }
-
+router.put('/', (req, res) => {
     postMedia(req, res);
+    return res.status(201).json({message: "media uploaded"});
+    // try {
+    // }catch(err){
+    //     console.error("error", err);
+    //     return res.status(500).json({message: `error occured ${err} `});
+    // }
 })
 
 module.exports = router;
