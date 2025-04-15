@@ -1,7 +1,8 @@
 const aws = require('aws-sdk');
 const sharp = require('sharp')
 const upload = require('../middlewares/fileChecker');
-const pool = require('../config/db')
+const pool = require('../config/db');
+const { default: axios } = require('axios');
 
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -63,7 +64,15 @@ const postMedia = (req, res) => {
                         ContentType: file.mimetype
                     }
 
-                    const video = await s3.upload(uploadVideo).promise();
+                    // const video = await s3.upload(uploadVideo).promise();
+                    const video = await s3.getSignedUrlPromise('putObject', uploadVideo)
+
+                    await axios.put(video, file.buffer, {
+                        headers: {
+                            'Content-Type': file.mimetype
+                        }
+                    })
+
                     res.status(200).json({
                         message: "video successfully uploaded",
                         url: video.Location
