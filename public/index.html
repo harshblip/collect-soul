@@ -46,6 +46,7 @@
             const result = await response.json();
             console.log(result)
             document.getElementById('response').innerText = result.message === null ? result.error : result.message + (result.files || '');
+            document.getElementById('video-url').innerHTML = result.url ? result.url : ''
         });
     </script>
 </body>

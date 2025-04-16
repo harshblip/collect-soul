@@ -2,7 +2,7 @@ const aws = require('aws-sdk');
 const sharp = require('sharp')
 const upload = require('../middlewares/fileChecker');
 const pool = require('../config/db');
-const { default: axios } = require('axios');
+const axios = require('axios');
 
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -10,22 +10,21 @@ aws.config.update({
     region: process.env.AWS_REGION,
 });
 
-const s3 = new aws.S3();
+const s3 = new aws.S3({
+    signatureVersion: 'v4'
+});
 
 const postMedia = (req, res) => {
-    try {
-        upload.array('file')(req, res, async (err) => {
-            const { id } = req.body; // supposed to add this in the frontend
+    upload.array('file')(req, res, async (err) => {
+        if (err) {
+            console.log("multer validation error: ", err.message);
+            return res.status(400).json({ message: err.message });
+        }
+        try {
+            const { id } = req.body;
             const username = req.body.username;
             const files = req.files;
             const response = [];
-
-            console.log(files);
-            if (err) {
-                console.log("multer validation error: ", err.message);
-                res.status(400).json({ message: err.message });
-                return;
-            }
 
             const userFolderKey = `${username}`;
 
@@ -45,7 +44,6 @@ const postMedia = (req, res) => {
             }
 
             for (const file of files) {
-
                 const fileName = file.originalname;
                 const mediaFolderKey = `${username}/${fileName}/`;
                 const fileKey = `${mediaFolderKey}${fileName}`;
@@ -56,27 +54,21 @@ const postMedia = (req, res) => {
                 }).promise();
 
                 if (file.mimetype.startsWith('video/')) {
-                    const originalVideo = file.buffer;
-                    const uploadVideo = {
+                    const params = {
                         Bucket: process.env.S3_BUCKET_NAME,
                         Key: fileKey,
-                        Body: originalVideo,
-                        ContentType: file.mimetype
-                    }
+                        ContentType: file.mimetype,
+                        Expires: 60
+                    };
 
-                    // const video = await s3.upload(uploadVideo).promise();
-                    const video = await s3.getSignedUrlPromise('putObject', uploadVideo)
+                    const signedUrl = s3.getSignedUrl('putObject', params);
 
-                    await axios.put(video, file.buffer, {
+                    await axios.put(signedUrl, file.buffer, {
                         headers: {
                             'Content-Type': file.mimetype
                         }
-                    })/
+                    });
 
-                    res.status(200).json({
-                        message: "video successfully uploaded",
-                        url: video.Location
-                    })
                 } else {
                     const originalImage = file.buffer;
 
@@ -127,20 +119,24 @@ const postMedia = (req, res) => {
                     })
 
                     const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
-                    const result = await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size, 3]);
-                    // replace the last parameter with real user_id
-                    console.log(result);
+                    await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size, 3]);
                 }
             }
-            res.status(200).send({
-                message: "Files uploaded successfully !",
+
+            return res.status(200).send({
+                message: "Files uploaded successfully!",
                 files: response
-            })
-        })
-    } catch (err) {
-        res.status(500).json({ message: err.message })
-    }
-}
+            });
+
+        } catch (err) {
+            console.error("Internal error:", err.message);
+            if (!res.headersSent) {
+                return res.status(500).json({ message: err.message });
+            }
+        }
+    });
+};
+
 
 const getImages = async (req, res) => {
     const { id } = req.query;

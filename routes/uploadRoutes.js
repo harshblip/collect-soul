@@ -56,13 +56,13 @@ router.delete('/deleteMedia', auth, [
 })
 
 router.put('/', (req, res) => {
-    postMedia(req, res);
-    return res.status(201).json({message: "media uploaded"});
-    // try {
-    // }catch(err){
-    //     console.error("error", err);
-    //     return res.status(500).json({message: `error occured ${err} `});
-    // }
+    try {
+        postMedia(req, res);
+        return res.status(201).json({ message: "media uploaded" });
+    } catch (err) {
+        console.error("error", err);
+        return res.status(500).json({ message: `error occured ${err} ` });
+    }
 })
 
 module.exports = router;
