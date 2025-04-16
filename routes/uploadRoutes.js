@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/authMiddleware')
 
-const { body, query, validationResult } = require('express-validator')
+const { query, validationResult } = require('express-validator')
 
 const { postMedia, getImages, getVideos, deleteMedia } = require('../controllers/mediaController');
 const limiter = require('../middlewares/rateLimiter');

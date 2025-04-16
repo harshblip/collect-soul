@@ -84,31 +84,53 @@ const postMedia = (req, res) => {
                     const uploadOriginalImage = {
                         Bucket: process.env.S3_BUCKET_NAME,
                         Key: fileKey,
-                        Body: originalImage,
+                        Expires: 60,
                         ContentType: file.mimetype
                     }
 
-                    const originalUpload = await s3.upload(uploadOriginalImage).promise();
+                    // const originalUpload = await s3.upload(uploadOriginalImage).promise();
+                    const originalUpload = s3.getSignedUrl('putObject', uploadOriginalImage);
+
+                    await axios.put(originalUpload, originalImage, {
+                        headers: {
+                            'Content-Type': file.mimetype
+                        }
+                    })
 
                     const tfileKey = `${mediaFolderKey}${fileName}_thumbnail.webp`;
                     const uploadthumbnailImage = {
                         Bucket: process.env.S3_BUCKET_NAME,
                         Key: tfileKey,
-                        Body: thumbnailImage,
+                        Expires: 60,
                         ContentType: 'image/webp'
                     }
 
-                    const thumbnailUpload = await s3.upload(uploadthumbnailImage).promise();
+                    // const thumbnailUpload = await s3.upload(uploadthumbnailImage).promise();
+                    const thumbnailUpload = s3.getSignedUrl('putObject', uploadthumbnailImage);
+
+                    await axios.put(thumbnailUpload, thumbnailImage, {
+                        headers: {
+                            'Content-Type': file.mimetype
+                        }
+                    })
 
                     const dfileKey = `${mediaFolderKey}${fileName}_display.webp`;
                     const uploaddisplayImage = {
                         Bucket: process.env.S3_BUCKET_NAME,
                         Key: dfileKey,
-                        Body: displayImage,
+                        Expires: 60,
                         ContentType: 'image/webp'
                     }
 
-                    const displayUpload = await s3.upload(uploaddisplayImage).promise();
+                    // const displayUpload = await s3.upload(uploaddisplayImage).promise();
+                    const displayUpload = s3.getSignedUrl('putObject', uploaddisplayImage);
+
+                    await axios.put(displayUpload, displayImage, {
+                        headers: {
+                            'Content-Type': file.mimetype
+                        }
+                    })
+
                     response.push({
                         fileName: fileName,
                         url: {
@@ -118,8 +140,8 @@ const postMedia = (req, res) => {
                         }
                     })
 
-                    const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
-                    await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size, 3]);
+                    // const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
+                    // await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size, 3]);
                 }
             }
 
