@@ -13,7 +13,7 @@ aws.config.update({
 const s3 = new aws.S3({
     signatureVersion: 'v4'
 });
-
+//BUG: write for pdf and music files
 const postMedia = (req, res) => {
     upload.array('file')(req, res, async (err) => {
         if (err) {
@@ -69,7 +69,7 @@ const postMedia = (req, res) => {
                         }
                     });
 
-                } else {
+                } else if (file.mimetype.startsWith('image/')) {
                     const originalImage = file.buffer;
 
                     const thumbnailImage = await sharp(file.buffer)
@@ -140,8 +140,46 @@ const postMedia = (req, res) => {
                         }
                     })
 
-                    // const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
-                    // await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size, 3]);
+                    const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
+                    await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size, 3]);
+
+                } else if (file.mimetype.startsWith('application/')) {
+                    const fileo = file.buffer;
+                    console.log(file)
+                    const params = {
+                        Bucket: process.env.S3_BUCKET_NAME,
+                        Key: fileKey,
+                        Expires: 60,
+                        ContentType: file.mimetype
+                    }
+
+                    const pdf = s3.getSignedUrl('putObject', params);
+
+                    await axios.put(pdf, fileo, {
+                        headers: {
+                            'Content-Type': file.mimetype
+                        }
+                    })
+
+                    const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
+                    await pool.query(query, [fileName, file.size, ])
+                } else {
+                    const fileo = file.buffer;
+
+                    const params = {
+                        Bucket: process.env.S3_BUCKET_NAME,
+                        Key: fileKey,
+                        Expires: 60,
+                        ContentType: file.mimetype
+                    }
+
+                    const music = s3.getSignedUrl('putObject', params);
+
+                    await axios.put(music, fileo, {
+                        headers: {
+                            'Content-Type': file.mimetype
+                        }
+                    })
                 }
             }
 
