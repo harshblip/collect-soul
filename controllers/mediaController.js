@@ -13,7 +13,14 @@ aws.config.update({
 const s3 = new aws.S3({
     signatureVersion: 'v4'
 });
-//BUG: write for pdf and music files
+
+function convertToMB(kb) {
+    const arr = ['bytes', 'KB', 'MB']
+    const i = parseInt(Math.floor(Math.log(kb) / Math.log(1024)), 10)
+    if (i === 0) return i;
+    return `${(kb / (1024 ** i)).toFixed(1)}${arr[i]}`
+}
+
 const postMedia = (req, res) => {
     upload.array('file')(req, res, async (err) => {
         if (err) {
@@ -97,6 +104,8 @@ const postMedia = (req, res) => {
                         }
                     })
 
+                    const originalImageUrl = `https://${process.env.S3_BUCKET_NAME}.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
+
                     const tfileKey = `${mediaFolderKey}${fileName}_thumbnail.webp`;
                     const uploadthumbnailImage = {
                         Bucket: process.env.S3_BUCKET_NAME,
@@ -113,6 +122,8 @@ const postMedia = (req, res) => {
                             'Content-Type': file.mimetype
                         }
                     })
+
+                    const thumbmailImageUrl = `https://${process.env.S3_BUCKET_NAME}.${process.env.AWS_REGION}.amazonaws.com/${tfileKey}`
 
                     const dfileKey = `${mediaFolderKey}${fileName}_display.webp`;
                     const uploaddisplayImage = {
@@ -131,6 +142,8 @@ const postMedia = (req, res) => {
                         }
                     })
 
+                    const displayImageUrl = `https://${process.env.S3_BUCKET_NAME}.${process.env.AWS_REGION}.amazonaws.com/${dfileKey}`;
+
                     response.push({
                         fileName: fileName,
                         url: {
@@ -141,7 +154,7 @@ const postMedia = (req, res) => {
                     })
 
                     const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
-                    await pool.query(query, [fileName, originalUpload.Location, thumbnailUpload.Location, displayUpload.Location, file.size, 3]);
+                    await pool.query(query, [fileName, originalImageUrl, thumbmailImageUrl, displayImageUrl, file.size, 3]);
 
                 } else if (file.mimetype.startsWith('application/')) {
                     const fileo = file.buffer;
@@ -160,9 +173,10 @@ const postMedia = (req, res) => {
                             'Content-Type': file.mimetype
                         }
                     })
-
+                    const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+                    const size = convertToMB(file.size);
                     const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
-                    await pool.query(query, [fileName, file.size, ])
+                    await pool.query(query, [fileName, url, size, 3])
                 } else {
                     const fileo = file.buffer;
 
@@ -180,6 +194,12 @@ const postMedia = (req, res) => {
                             'Content-Type': file.mimetype
                         }
                     })
+
+                    const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
+                    const query = `insert into music (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
+
+                    await pool.query(query, [3, fileName, url, file.size])
+
                 }
             }
 
