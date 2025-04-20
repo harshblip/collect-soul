@@ -144,8 +144,7 @@ const postMedia = (req, res) => {
                     const displayImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${dfileKey}`;
 
                     const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
-                    const size = byteToSize(file.size)
-                    await pool.query(query, [fileName, originalImageUrl, thumbmailImageUrl, displayImageUrl, size, 3]);
+                    await pool.query(query, [fileName, originalImageUrl, thumbmailImageUrl, displayImageUrl, file.size, 3]);
 
                 } else if (file.mimetype.startsWith('application/')) {
                     const fileo = file.buffer;
@@ -165,9 +164,8 @@ const postMedia = (req, res) => {
                         }
                     })
                     const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-                    const size = byteToSize(file.size);
-                    // const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
-                    // await pool.query(query, [fileName, url, size, 3])
+                    const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
+                    await pool.query(query, [fileName, url, file.size, 3])
                 } else {
                     const fileo = file.buffer;
 
@@ -188,8 +186,7 @@ const postMedia = (req, res) => {
 
                     const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
                     const query = `insert into music (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
-                    const size = byteToSize(file.size)
-                    await pool.query(query, [3, fileName, url, size])
+                    await pool.query(query, [3, fileName, url, file.size])
 
                 }
             }
