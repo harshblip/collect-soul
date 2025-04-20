@@ -9,7 +9,7 @@ const userRoutes = require('./routes/users')
 const limiter = require('./middlewares/rateLimiter')
 
 const app = express();
-const port = 3000;
+const port = 4000;
 
 app.use(cors());
 

@@ -23,7 +23,9 @@ const authenticateToken = (req, res, next) => {
             const refreshToken = req.cookies.refreshToken;
             console.log("expired")
             if (!refreshToken) {
-                return res.status(401).json({ message: "please login again" })
+                let message = "please login again"
+                res.status(401).json({ message: "please login again" })
+                return message
             }
 
             jwt.verify(refreshToken, REFRESH_SECRET, (err, decoded) => {
