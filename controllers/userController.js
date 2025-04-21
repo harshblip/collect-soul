@@ -52,7 +52,7 @@ const loginUser = async (req, res) => {
             }
             // console.log(payload)
             if (passwordCheck) {
-                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '2m' })
+                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '1d' })
                 const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '1d' });
 
                 res.cookie('refreshToken', refresh_token, {

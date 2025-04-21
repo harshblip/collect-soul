@@ -200,7 +200,7 @@ const postMedia = (req, res) => {
             console.error("Internal error:", err.message);
             message = `Error: ${err.message}`
             if (!res.headersSent) {
-                res.status(500).json({ message: err.message });
+                return res.status(500).json({ message: err.message });
             }
         }
     });
@@ -267,9 +267,6 @@ const deleteMedia = async (req, res) => {
     return message
 }
 
-const getImageByFolder = (req, res) => {
-
-}
 
 const getVideos = async (req, res) => {
     const { id } = req.query;
@@ -291,8 +288,71 @@ const getVideos = async (req, res) => {
     return message
 }
 
+const renameMedia = async (req, res) => {
+    const { username, oldFileName, newFileName, user_id } = req.body;
+    console.log(username)
+    const oldPrefix = `${username}/${oldFileName}/`
+    const newPrefix = `${username}/${newFileName}/`
+    try {
+        const bucketName = process.env.S3_BUCKET_NAME
+
+        // list all objects of the folder
+        const listedObjects = await s3.listObjectsV2({
+            Bucket: bucketName,
+            Prefix: oldPrefix
+        }).promise()
+
+        if (!listedObjects.Contents.length) {
+            return res.status(404).json({ error: "No files found under the old folder name." });
+        }
+
+        // copy the objects and replace the name
+        const copyPromise = listedObjects.Contents.map(async (x) => {
+            const oldKey = x.Key;
+            // const newKey = oldKey.replace(oldPrefix, newPrefix)
+
+            const suffix = oldKey.substring(oldPrefix.length); // like: oldFileName, oldFileName_display.webp
+            const updatedSuffix = suffix.replace(oldFileName, newFileName); // updated file name
+            const newKey = `${newPrefix}${updatedSuffix}`;
+
+            return s3.copyObject({
+                Bucket: bucketName,
+                CopySource: `${bucketName}/${oldKey}`,
+                Key: newKey
+            }).promise()
+        })
+
+        await Promise.all(copyPromise);
+
+        // delete objects
+        const deleteParams = {
+            Bucket: bucketName,
+            Delete: {
+                Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
+            }
+        }
+
+        await s3.deleteObjects(deleteParams).promise()
+
+        res.status(200).json({ message: "files renamed!" })
+        message = "files renamed!"
+
+    } catch (err) {
+        console.log("error in renameMedia: ", err);
+        message = err.message;
+        if (!res.headersSent) {
+            return res.status(500).json({ message: err.message });
+        }
+    }
+    // return message
+}
+
+const getImageByFolder = (req, res) => {
+
+}
+
 const getVideosByFolder = (req, res) => {
 
 }
 
-module.exports = { postMedia, getImages, deleteMedia, getVideos };
+module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia };

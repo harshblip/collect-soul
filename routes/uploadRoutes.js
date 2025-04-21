@@ -4,7 +4,7 @@ const auth = require('../middlewares/authMiddleware')
 
 const { query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, getVideos, deleteMedia } = require('../controllers/mediaController');
+const { postMedia, getImages, getVideos, deleteMedia, renameMedia } = require('../controllers/mediaController');
 const limiter = require('../middlewares/rateLimiter');
 
 router.get('/getImages', auth, [
@@ -23,7 +23,9 @@ router.get('/getImages', auth, [
         return res.status(204).json({ message: message })
     } catch (err) {
         console.log("error in getImages: ", err);
-        return res.status(500).json({ message: `error occured in getImages ${err}` })
+        if (!res.headersSent) {
+            return res.status(500).json({ message: `error occured in getImages ${err}` })
+        }
     }
 
 })
@@ -70,6 +72,16 @@ router.delete('/deleteMedia', auth, [
         return res.status(500).json({ message: `error occured in deleteMedia ${err}` })
     }
 
+})
+
+router.put('/rename', (req, res) => {
+    try {
+        const message = renameMedia(req, res);
+        return res.status(201).json({ message: message });
+    } catch (err) {
+        console.error("error", err);
+        return res.status(500).json({ message: `error occured in updating name:  ${err} ` });
+    }
 })
 
 router.put('/', (req, res) => {
