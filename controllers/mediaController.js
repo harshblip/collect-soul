@@ -290,7 +290,7 @@ const getVideos = async (req, res) => {
 
 const renameMedia = async (req, res) => {
     const { username, oldFileName, newFileName, user_id } = req.body;
-    console.log(username)
+    console.log(username, user_id, oldFileName, newFileName)
     const oldPrefix = `${username}/${oldFileName}/`
     const newPrefix = `${username}/${newFileName}/`
     try {
@@ -332,7 +332,9 @@ const renameMedia = async (req, res) => {
             }
         }
 
+        const query = `update images set file_name = $1 where user_id = $2 && file_name = $3`
         await s3.deleteObjects(deleteParams).promise()
+        await pool.query(query, [newFileName, user_id, oldFileName])
 
         res.status(200).json({ message: "files renamed!" })
         message = "files renamed!"
