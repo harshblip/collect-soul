@@ -195,21 +195,14 @@ const postMedia = (req, res) => {
 
                 }
             }
-            res.status(200).json({
-                message: msg,
-                files: response
-            });
             message = "Files uploaded successfully!"
-
+            return message
         } catch (err) {
             console.error("Internal error:", err.message);
             message = `Error: ${err.message}`
-            if (!res.headersSent) {
-                return res.status(500).json({ message: err.message });
-            }
+            return message
         }
     });
-    return message;
 };
 
 
@@ -348,8 +341,8 @@ const renameMedia = async (req, res) => {
         } else if (type === 'audio') {
             const query = `update audio set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
             await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
-        }else {
-            const query = `update video set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
+        } else {
+            const query = `update videos set video_name = $1, video_url = $2 where user_id = $3 AND video_name = $4`
             await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
         }
         // delete objects
