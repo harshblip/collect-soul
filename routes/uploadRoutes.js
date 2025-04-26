@@ -87,7 +87,7 @@ router.put('/rename', async (req, res) => {
 
 router.put('/', async (req, res) => {
     try {
-        const message = await postMedia(req, res);
+        const message = postMedia(req, res);
         return res.status(201).json({ message: message });
     } catch (err) {
         console.error("error", err);

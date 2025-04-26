@@ -27,7 +27,8 @@ const postMedia = (req, res) => {
     upload.array('file')(req, res, async (err) => {
         if (err) {
             console.log("multer validation error: ", err.message);
-            return res.status(400).json({ message: err.message });
+            message = err.message
+            return message
         }
         try {
             const { id } = req.body;
@@ -153,7 +154,12 @@ const postMedia = (req, res) => {
 
                 } else if (file.mimetype.startsWith('application/')) {
                     const fileo = file.buffer;
-                    console.log(file)
+                    // console.log(file)
+                    if (file.size > 20 * 1024 * 1024) {
+                        message = "file tooooooo bigg"
+                        console.log(message)
+                        return { message }
+                    }
                     const params = {
                         Bucket: process.env.S3_BUCKET_NAME,
                         Key: fileKey,
@@ -163,14 +169,14 @@ const postMedia = (req, res) => {
 
                     const pdf = s3.getSignedUrl('putObject', params);
 
-                    await axios.put(pdf, fileo, {
-                        headers: {
-                            'Content-Type': file.mimetype
-                        }
-                    })
+                    // await axios.put(pdf, fileo, {
+                    //     headers: {
+                    //         'Content-Type': file.mimetype
+                    //     }
+                    // })
                     const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
                     const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
-                    await pool.query(query, [fileName, url, file.size, 3])
+                    // await pool.query(query, [fileName, url, file.size, 3])
                 } else {
                     const fileo = file.buffer;
 
@@ -183,15 +189,15 @@ const postMedia = (req, res) => {
 
                     const music = s3.getSignedUrl('putObject', params);
 
-                    await axios.put(music, fileo, {
-                        headers: {
-                            'Content-Type': file.mimetype
-                        }
-                    })
+                    // await axios.put(music, fileo, {
+                    //     headers: {
+                    //         'Content-Type': file.mimetype
+                    //     }
+                    // })
 
                     const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
                     const query = `insert into audio (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
-                    await pool.query(query, [3, fileName, url, file.size])
+                    // await pool.query(query, [3, fileName, url, file.size])
 
                 }
             }
