@@ -21,7 +21,6 @@ function byteToSize(kb) {
     return `${(kb / (1024 ** i)).toFixed(1)}${arr[i]}`
 }
 
-let message = "";
 
 const postMedia = (req, res) => {
     upload.array('file')(req, res, async (err) => {
@@ -290,9 +289,10 @@ const getVideos = async (req, res) => {
 
 const renameMedia = async (req, res) => {
     const { username, oldFileName, newFileName, user_id } = req.body;
-    console.log(username, user_id, oldFileName, newFileName)
+    console.log(username, oldFileName, newFileName)
     const oldPrefix = `${username}/${oldFileName}/`
     const newPrefix = `${username}/${newFileName}/`
+
     try {
         const bucketName = process.env.S3_BUCKET_NAME
 
@@ -303,17 +303,24 @@ const renameMedia = async (req, res) => {
         }).promise()
 
         if (!listedObjects.Contents.length) {
-            return res.status(404).json({ error: "No files found under the old folder name." });
+            message = "No files found under the old folder name."
+            return message
         }
+
+        let urls = []
 
         // copy the objects and replace the name
         const copyPromise = listedObjects.Contents.map(async (x) => {
             const oldKey = x.Key;
-            // const newKey = oldKey.replace(oldPrefix, newPrefix)
 
             const suffix = oldKey.substring(oldPrefix.length); // like: oldFileName, oldFileName_display.webp
             const updatedSuffix = suffix.replace(oldFileName, newFileName); // updated file name
             const newKey = `${newPrefix}${updatedSuffix}`;
+
+            const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey}`
+            // console.log(newKey, fileUrl)
+
+            urls.push(fileUrl)
 
             return s3.copyObject({
                 Bucket: bucketName,
@@ -324,6 +331,11 @@ const renameMedia = async (req, res) => {
 
         await Promise.all(copyPromise);
 
+        console.log(urls[3], urls[1], urls[2]);
+
+        const query = `update images set file_name = $1, file_url = $4, display_image_url = $5, thumbnail_image_url = $6 where user_id = $2 AND file_name = $3`
+        await pool.query(query, [newFileName, user_id, oldFileName, urls[1], urls[2], urls[3]])
+
         // delete objects
         const deleteParams = {
             Bucket: bucketName,
@@ -332,19 +344,18 @@ const renameMedia = async (req, res) => {
             }
         }
 
-        const query = `update images set file_name = $1 where user_id = $2 && file_name = $3`
         await s3.deleteObjects(deleteParams).promise()
-        await pool.query(query, [newFileName, user_id, oldFileName])
 
-        res.status(200).json({ message: "files renamed!" })
+
         message = "files renamed!"
-
+        return message
     } catch (err) {
         console.log("error in renameMedia: ", err);
         message = err.message;
         if (!res.headersSent) {
-            return res.status(500).json({ message: err.message });
+            return message = err.message
         }
+        return message
     }
     // return message
 }

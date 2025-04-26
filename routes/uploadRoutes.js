@@ -74,19 +74,20 @@ router.delete('/deleteMedia', auth, [
 
 })
 
-router.put('/rename', (req, res) => {
+router.put('/rename', async (req, res) => {
     try {
-        const message = renameMedia(req, res);
-        return res.status(201).json({ message: message });
+        const message = await renameMedia(req, res);
+        console.log(message)
+        return res.status(200).json({ message: message });
     } catch (err) {
         console.error("error", err);
         return res.status(500).json({ message: `error occured in updating name:  ${err} ` });
     }
 })
 
-router.put('/', (req, res) => {
+router.put('/', async (req, res) => {
     try {
-        const message = postMedia(req, res);
+        const message = await postMedia(req, res);
         return res.status(201).json({ message: message });
     } catch (err) {
         console.error("error", err);
