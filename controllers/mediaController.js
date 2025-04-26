@@ -21,6 +21,7 @@ function byteToSize(kb) {
     return `${(kb / (1024 ** i)).toFixed(1)}${arr[i]}`
 }
 
+let message = '';
 
 const postMedia = (req, res) => {
     upload.array('file')(req, res, async (err) => {
@@ -76,6 +77,11 @@ const postMedia = (req, res) => {
                             'Content-Type': file.mimetype
                         }
                     });
+
+                    const videoUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
+
+                    const query = `insert into videos (video_name, video_url, video_size, user_id) values ($1, $2, $3, $4)`
+                    await pool.query(query, [fileName, videoUrl, file.size, 3])
 
                 } else if (file.mimetype.startsWith('image/')) {
                     const originalImage = file.buffer;
@@ -184,7 +190,7 @@ const postMedia = (req, res) => {
                     })
 
                     const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
-                    const query = `insert into music (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
+                    const query = `insert into audio (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
                     await pool.query(query, [3, fileName, url, file.size])
 
                 }
@@ -288,7 +294,7 @@ const getVideos = async (req, res) => {
 }
 
 const renameMedia = async (req, res) => {
-    const { username, oldFileName, newFileName, user_id } = req.body;
+    const { username, oldFileName, newFileName, user_id, type } = req.body;
     console.log(username, oldFileName, newFileName)
     const oldPrefix = `${username}/${oldFileName}/`
     const newPrefix = `${username}/${newFileName}/`
@@ -317,7 +323,7 @@ const renameMedia = async (req, res) => {
             const updatedSuffix = suffix.replace(oldFileName, newFileName); // updated file name
             const newKey = `${newPrefix}${updatedSuffix}`;
 
-            const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey}`
+            const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey.replace(/ /g, '+')}`;
             // console.log(newKey, fileUrl)
 
             urls.push(fileUrl)
@@ -331,11 +337,21 @@ const renameMedia = async (req, res) => {
 
         await Promise.all(copyPromise);
 
-        console.log(urls[3], urls[1], urls[2]);
+        // console.log(urls[1]);
 
-        const query = `update images set file_name = $1, file_url = $4, display_image_url = $5, thumbnail_image_url = $6 where user_id = $2 AND file_name = $3`
-        await pool.query(query, [newFileName, user_id, oldFileName, urls[1], urls[2], urls[3]])
-
+        if (type === 'image') {
+            const query = `update images set file_name = $1, file_url = $4, display_image_url = $5, thumbnail_image_url = $6 where user_id = $2 AND file_name = $3`
+            await pool.query(query, [newFileName, user_id, oldFileName, urls[1], urls[2], urls[3]])
+        } else if (type === 'documents') {
+            const query = `update documents set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
+            await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
+        } else if (type === 'audio') {
+            const query = `update audio set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
+            await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
+        }else {
+            const query = `update video set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
+            await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
+        }
         // delete objects
         const deleteParams = {
             Bucket: bucketName,
@@ -345,7 +361,6 @@ const renameMedia = async (req, res) => {
         }
 
         await s3.deleteObjects(deleteParams).promise()
-
 
         message = "files renamed!"
         return message
