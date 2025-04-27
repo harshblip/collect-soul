@@ -157,26 +157,26 @@ const postMedia = (req, res) => {
                     // console.log(file)
                     if (file.size > 20 * 1024 * 1024) {
                         message = "file tooooooo bigg"
-                        console.log(message)
-                        return { message }
-                    }
-                    const params = {
-                        Bucket: process.env.S3_BUCKET_NAME,
-                        Key: fileKey,
-                        Expires: 60,
-                        ContentType: file.mimetype
-                    }
+                        // console.log(message)
+                    } else {
+                        const params = {
+                            Bucket: process.env.S3_BUCKET_NAME,
+                            Key: fileKey,
+                            Expires: 60,
+                            ContentType: file.mimetype
+                        }
 
-                    const pdf = s3.getSignedUrl('putObject', params);
+                        const pdf = s3.getSignedUrl('putObject', params);
 
-                    // await axios.put(pdf, fileo, {
-                    //     headers: {
-                    //         'Content-Type': file.mimetype
-                    //     }
-                    // })
-                    const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-                    const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
-                    // await pool.query(query, [fileName, url, file.size, 3])
+                        // await axios.put(pdf, fileo, {
+                        //     headers: {
+                        //         'Content-Type': file.mimetype
+                        //     }
+                        // })
+                        const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+                        const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
+                        // await pool.query(query, [fileName, url, file.size, 3])
+                    }
                 } else {
                     const fileo = file.buffer;
 
@@ -208,6 +208,7 @@ const postMedia = (req, res) => {
             message = `Error: ${err.message}`
             return message
         }
+        return message
     });
 };
 
