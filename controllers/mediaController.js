@@ -24,141 +24,161 @@ function byteToSize(kb) {
 let message = '';
 
 const postMedia = (req, res) => {
-    upload.array('file')(req, res, async (err) => {
-        if (err) {
-            console.log("multer validation error: ", err.message);
-            message = err.message
-            return message
-        }
-        try {
-            const { id } = req.body;
-            const username = req.body.username;
-            const files = req.files;
-            const response = [];
-
-            const userFolderKey = `${username}`;
-
-            const listParams = {
-                Bucket: process.env.S3_BUCKET_NAME,
-                Prefix: userFolderKey,
-                MaxKeys: 1,
+    return new Promise((res, rej) => {
+        upload.array('file')(req, res, async (err) => {
+            if (err) {
+                console.log("multer validation error: ", err.message);
+                return res(err.message)
             }
+            try {
+                const { id } = req.body;
+                const username = req.body.username;
+                const files = req.files;
+                const response = [];
 
-            const existingFolder = await s3.listObjectsV2(listParams).promise();
+                const userFolderKey = `${username}`;
 
-            if (existingFolder.Contents.length === 0) {
-                await s3.putObject({
+                const listParams = {
                     Bucket: process.env.S3_BUCKET_NAME,
-                    Key: userFolderKey,
-                }).promise();
-            }
+                    Prefix: userFolderKey,
+                    MaxKeys: 1,
+                }
 
-            for (const file of files) {
-                const fileName = file.originalname;
-                const mediaFolderKey = `${username}/${fileName}/`;
-                const fileKey = `${mediaFolderKey}${fileName}`;
+                const existingFolder = await s3.listObjectsV2(listParams).promise();
 
-                await s3.putObject({
-                    Bucket: process.env.S3_BUCKET_NAME,
-                    Key: mediaFolderKey,
-                }).promise();
-
-                if (file.mimetype.startsWith('video/')) {
-                    const params = {
+                if (existingFolder.Contents.length === 0) {
+                    await s3.putObject({
                         Bucket: process.env.S3_BUCKET_NAME,
-                        Key: fileKey,
-                        ContentType: file.mimetype,
-                        Expires: 60
-                    };
+                        Key: userFolderKey,
+                    }).promise();
+                }
 
-                    const signedUrl = s3.getSignedUrl('putObject', params);
+                for (const file of files) {
+                    const fileName = file.originalname;
+                    const mediaFolderKey = `${username}/${fileName}/`;
+                    const fileKey = `${mediaFolderKey}${fileName}`;
 
-                    await axios.put(signedUrl, file.buffer, {
-                        headers: {
-                            'Content-Type': file.mimetype
-                        }
-                    });
-
-                    const videoUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
-
-                    const query = `insert into videos (video_name, video_url, video_size, user_id) values ($1, $2, $3, $4)`
-                    await pool.query(query, [fileName, videoUrl, file.size, 3])
-
-                } else if (file.mimetype.startsWith('image/')) {
-                    const originalImage = file.buffer;
-
-                    const thumbnailImage = await sharp(file.buffer)
-                        .resize(150)
-                        .webp({ quality: 80 })
-                        .toBuffer()
-                    const displayImage = await sharp(file.buffer)
-                        .resize(800)
-                        .webp({ quality: 90 })
-                        .toBuffer()
-
-                    const uploadOriginalImage = {
+                    await s3.putObject({
                         Bucket: process.env.S3_BUCKET_NAME,
-                        Key: fileKey,
-                        Expires: 60,
-                        ContentType: file.mimetype
-                    }
+                        Key: mediaFolderKey,
+                    }).promise();
 
-                    const originalUpload = s3.getSignedUrl('putObject', uploadOriginalImage);
+                    if (file.mimetype.startsWith('video/')) {
+                        const params = {
+                            Bucket: process.env.S3_BUCKET_NAME,
+                            Key: fileKey,
+                            ContentType: file.mimetype,
+                            Expires: 60
+                        };
 
-                    await axios.put(originalUpload, originalImage, {
-                        headers: {
-                            'Content-Type': file.mimetype
+                        const signedUrl = s3.getSignedUrl('putObject', params);
+
+                        await axios.put(signedUrl, file.buffer, {
+                            headers: {
+                                'Content-Type': file.mimetype
+                            }
+                        });
+
+                        const videoUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
+
+                        const query = `insert into videos (video_name, video_url, video_size, user_id) values ($1, $2, $3, $4)`
+                        await pool.query(query, [fileName, videoUrl, file.size, 3])
+
+                    } else if (file.mimetype.startsWith('image/')) {
+                        const originalImage = file.buffer;
+
+                        const thumbnailImage = await sharp(file.buffer)
+                            .resize(150)
+                            .webp({ quality: 80 })
+                            .toBuffer()
+                        const displayImage = await sharp(file.buffer)
+                            .resize(800)
+                            .webp({ quality: 90 })
+                            .toBuffer()
+
+                        const uploadOriginalImage = {
+                            Bucket: process.env.S3_BUCKET_NAME,
+                            Key: fileKey,
+                            Expires: 60,
+                            ContentType: file.mimetype
                         }
-                    })
 
-                    const originalImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
+                        const originalUpload = s3.getSignedUrl('putObject', uploadOriginalImage);
 
-                    const tfileKey = `${mediaFolderKey}${fileName}_thumbnail.webp`;
-                    const uploadthumbnailImage = {
-                        Bucket: process.env.S3_BUCKET_NAME,
-                        Key: tfileKey,
-                        Expires: 60,
-                        ContentType: 'image/webp'
-                    }
+                        await axios.put(originalUpload, originalImage, {
+                            headers: {
+                                'Content-Type': file.mimetype
+                            }
+                        })
 
-                    const thumbnailUpload = s3.getSignedUrl('putObject', uploadthumbnailImage);
+                        const originalImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
 
-                    await axios.put(thumbnailUpload, thumbnailImage, {
-                        headers: {
-                            'Content-Type': file.mimetype
+                        const tfileKey = `${mediaFolderKey}${fileName}_thumbnail.webp`;
+                        const uploadthumbnailImage = {
+                            Bucket: process.env.S3_BUCKET_NAME,
+                            Key: tfileKey,
+                            Expires: 60,
+                            ContentType: 'image/webp'
                         }
-                    })
 
-                    const thumbmailImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${tfileKey}`
+                        const thumbnailUpload = s3.getSignedUrl('putObject', uploadthumbnailImage);
 
-                    const dfileKey = `${mediaFolderKey}${fileName}_display.webp`;
-                    const uploaddisplayImage = {
-                        Bucket: process.env.S3_BUCKET_NAME,
-                        Key: dfileKey,
-                        Expires: 60,
-                        ContentType: 'image/webp'
-                    }
+                        await axios.put(thumbnailUpload, thumbnailImage, {
+                            headers: {
+                                'Content-Type': file.mimetype
+                            }
+                        })
 
-                    const displayUpload = s3.getSignedUrl('putObject', uploaddisplayImage);
+                        const thumbmailImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${tfileKey}`
 
-                    await axios.put(displayUpload, displayImage, {
-                        headers: {
-                            'Content-Type': file.mimetype
+                        const dfileKey = `${mediaFolderKey}${fileName}_display.webp`;
+                        const uploaddisplayImage = {
+                            Bucket: process.env.S3_BUCKET_NAME,
+                            Key: dfileKey,
+                            Expires: 60,
+                            ContentType: 'image/webp'
                         }
-                    })
 
-                    const displayImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${dfileKey}`;
+                        const displayUpload = s3.getSignedUrl('putObject', uploaddisplayImage);
 
-                    const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
-                    await pool.query(query, [fileName, originalImageUrl, thumbmailImageUrl, displayImageUrl, file.size, 3]);
+                        await axios.put(displayUpload, displayImage, {
+                            headers: {
+                                'Content-Type': file.mimetype
+                            }
+                        })
 
-                } else if (file.mimetype.startsWith('application/')) {
-                    const fileo = file.buffer;
-                    // console.log(file)
-                    if (file.size > 20 * 1024 * 1024) {
-                        message = "file tooooooo bigg"
-                        // console.log(message)
+                        const displayImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${dfileKey}`;
+
+                        const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
+                        await pool.query(query, [fileName, originalImageUrl, thumbmailImageUrl, displayImageUrl, file.size, 3]);
+
+                    } else if (file.mimetype.startsWith('application/')) {
+                        const fileo = file.buffer;
+                        // console.log(file)
+                        if (file.size > 20 * 1024 * 1024) {
+                            return res("file tooooooo bigg")
+                        } else {
+                            const params = {
+                                Bucket: process.env.S3_BUCKET_NAME,
+                                Key: fileKey,
+                                Expires: 60,
+                                ContentType: file.mimetype
+                            }
+
+                            const pdf = s3.getSignedUrl('putObject', params);
+
+                            // await axios.put(pdf, fileo, {
+                            //     headers: {
+                            //         'Content-Type': file.mimetype
+                            //     }
+                            // })
+                            const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
+                            const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
+                            // await pool.query(query, [fileName, url, file.size, 3])
+                        }
                     } else {
+                        const fileo = file.buffer;
+
                         const params = {
                             Bucket: process.env.S3_BUCKET_NAME,
                             Key: fileKey,
@@ -166,50 +186,29 @@ const postMedia = (req, res) => {
                             ContentType: file.mimetype
                         }
 
-                        const pdf = s3.getSignedUrl('putObject', params);
+                        const music = s3.getSignedUrl('putObject', params);
 
-                        // await axios.put(pdf, fileo, {
+                        // await axios.put(music, fileo, {
                         //     headers: {
                         //         'Content-Type': file.mimetype
                         //     }
                         // })
-                        const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-                        const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
-                        // await pool.query(query, [fileName, url, file.size, 3])
+
+                        const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
+                        const query = `insert into audio (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
+                        // await pool.query(query, [3, fileName, url, file.size])
+
                     }
-                } else {
-                    const fileo = file.buffer;
-
-                    const params = {
-                        Bucket: process.env.S3_BUCKET_NAME,
-                        Key: fileKey,
-                        Expires: 60,
-                        ContentType: file.mimetype
-                    }
-
-                    const music = s3.getSignedUrl('putObject', params);
-
-                    // await axios.put(music, fileo, {
-                    //     headers: {
-                    //         'Content-Type': file.mimetype
-                    //     }
-                    // })
-
-                    const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
-                    const query = `insert into audio (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
-                    // await pool.query(query, [3, fileName, url, file.size])
-
                 }
+                message = "Files uploaded successfully!"
+                return message
+            } catch (err) {
+                console.error("Internal error:", err.message);
+                message = `Error: ${err.message}`
+                return message
             }
-            message = "Files uploaded successfully!"
-            return message
-        } catch (err) {
-            console.error("Internal error:", err.message);
-            message = `Error: ${err.message}`
-            return message
-        }
-        return message
-    });
+        });
+    })
 };
 
 
