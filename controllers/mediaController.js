@@ -244,40 +244,46 @@ const getImages = async (req, res) => {
     } catch (err) {
         message = err.message
         console.error(err);
-        return message        
+        return message
     }
 
 }
 
 const deleteMedia = async (req, res) => {
-    const { username, fileName, imageId } = req.query;
+    const { username, files, id } = req.query;
     try {
-        const filePath = `${username}/${fileName}/`;
+        for (const fileName of files) {
+            const filePath = `${username}/${fileName}/`;
 
-        const listParams = {
-            Bucket: process.env.S3_BUCKET_NAME,
-            Prefix: filePath
-        }
-
-        const listedObjects = await s3.listObjectsV2(listParams).promise();
-
-        if (!listedObjects.Contents.length) {
-            message = "Folder not found or already deleted"
-            return message;
-        }
-
-        const deleteParam = {
-            Bucket: process.env.S3_BUCKET_NAME,
-            Delete: {
-                Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
+            const listParams = {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Prefix: filePath
             }
+
+            const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+            if (!listedObjects.Contents.length) {
+                message = "Folder not found or already deleted"
+                return message;
+            }
+
+            const deleteParam = {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Delete: {
+                    Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
+                }
+            }
+
+            await s3.deleteObjects(deleteParam).promise();
+
+            const query = `delete from images where file_name = $1 and user_id = $2`;
+            pool.query(query, [fileName, id]);
         }
-
-        await s3.deleteObjects(deleteParam).promise();
-
-        const query = `delete from images where id = $1`;
-        pool.query(query, [imageId]);
-        message = "image deleted successfully !"
+        if (files.length > 1) {
+            message = "images deleted successfully !"
+        } else {
+            message = "image deleted successfully !"
+        }
         return message
     } catch (err) {
         console.error(err);
