@@ -234,17 +234,17 @@ const getImages = async (req, res) => {
     try {
         if (!id) {
             message = "userid is needed to get their images"
-            res.status(400).json({ message: "userid is needed to get their images" })
             return message;
         }
         const query = `select * from images where user_id = $1`;
         const result = await pool.query(query, [id]);
         // console.log(result.rows)
-        res.status(200).json({ message: "images retrieved", images: result.rows })
+        images = result.rows
+        return images
     } catch (err) {
         message = err.message
         console.error(err);
-        res.status(500).json({ message: err.message })
+        return message        
     }
 
 }
@@ -263,7 +263,6 @@ const deleteMedia = async (req, res) => {
 
         if (!listedObjects.Contents.length) {
             message = "Folder not found or already deleted"
-            res.status(404).json({ message: 'Folder not found or already deleted' });
             return message;
         }
 
@@ -279,13 +278,12 @@ const deleteMedia = async (req, res) => {
         const query = `delete from images where id = $1`;
         pool.query(query, [imageId]);
         message = "image deleted successfully !"
-        res.status(204).json({ message: "image deleted successfully !" })
+        return message
     } catch (err) {
         console.error(err);
         message = err.message
-        res.status(500).json({ message: err.message })
+        return message
     }
-    return message
 }
 
 
@@ -294,19 +292,17 @@ const getVideos = async (req, res) => {
     try {
         if (!id) {
             message = "user id is missing"
-            res.status(404).json({ message: "user id is missing" })
             return message
         }
         const query = `select * from videos where user_id = $1`;
-        const result = await pool.query(query, [id]);
+        await pool.query(query, [id]);
         message = "videos retrieved"
-        res.status(200).json({ message: "videos retrieved", videos: result.rows })
+        return message
     } catch (err) {
         console.error(err);
         message = err.message
-        res.status(500).json({ messaage: err.message })
+        return message
     }
-    return message
 }
 
 const renameMedia = async (req, res) => {

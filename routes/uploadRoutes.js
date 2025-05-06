@@ -19,8 +19,9 @@ router.get('/getImages', auth, [
         return res.status(400).json({ message: errArray[0].msg })
     }
     try {
-        const message = await getImages(req, res);;
-        return res.status(204).json({ message: message })
+        const message = await getImages(req, res);
+        console.log(message)
+        return res.status(200).json({ message: message })
     } catch (err) {
         console.log("error in getImages: ", err);
         if (!res.headersSent) {
