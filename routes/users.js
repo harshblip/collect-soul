@@ -50,7 +50,8 @@ router.get('/login', limiter, [
         const error = errors.array();
         res.status(400).json({ message: error[0].msg })
     }
-    await loginUser(req, res);
+    const message = await loginUser(req, res);
+    res.status(200).json({ message: message })
 })
 
 module.exports = router;

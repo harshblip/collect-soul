@@ -39,6 +39,8 @@ const createUsers = async (req, res) => {
     }
 }
 
+let message = ''
+
 const loginUser = async (req, res) => {
     const { email, password } = req.query;
     const ans = await getUsers(email);
@@ -54,7 +56,8 @@ const loginUser = async (req, res) => {
             const now = new Date();
             if (ans.locked_until && now < ans.locked_until) {
                 const remaining = Math.ceil((ans.locked_until - now) / 1000);
-                return { success: false, message: `Account locked. Try again in ${remaining}s` };
+                message = `Account locked. Try again in ${remaining}s`
+                return message
             }
 
             // console.log(payload)
@@ -82,14 +85,17 @@ const loginUser = async (req, res) => {
                 }
 
                 await pool.query(`update users set failed_attempts = $1, lockout_level = $2, locked_until = $3 where email = $4`, [failedAttempts, lockoutLevel, lockedUntil, email]);
-                res.status(404).json({ message: "password does not match" })
+                message = "password does not match"
+                return message
             }
         } else {
-            res.status(404).json({ message: "no such account found. try signing up" })
+            message = "no such account found. try signing up"
+            return message
         }
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.message })
+        message = err.message
+        return message
     }
 }
 
