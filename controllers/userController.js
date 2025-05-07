@@ -50,6 +50,13 @@ const loginUser = async (req, res) => {
                 email: email,
                 id: ans.id
             }
+
+            const now = new Date();
+            if (ans.locked_until && now < ans.locked_until) {
+                const remaining = Math.ceil((ans.locked_until - now) / 1000);
+                return { success: false, message: `Account locked. Try again in ${remaining}s` };
+            }
+
             // console.log(payload)
             if (passwordCheck) {
                 const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '1d' })
@@ -63,6 +70,18 @@ const loginUser = async (req, res) => {
 
                 res.status(200).json({ message: "user logged in successfully", access_token })
             } else {
+                let failedAttempts = ans.failed_attempts + 1;
+                let lockoutLevel = ans.lockout_level;
+                let lockedUntil = null;
+
+                if ((lockoutLevel === 0 && failedAttempts >= 5) || (lockoutLevel > 0 && failedAttempts >= 2)) {
+                    lockoutLevel += 1;
+                    const lockMinutes = lockoutLevel === 1 ? 1 : lockoutLevel * 2;
+                    lockedUntil = new Date(Date.now() + lockMinutes * 60 * 1000);
+                    failedAttempts = 0;
+                }
+
+                await pool.query(`update users set failed_attempts = $1, lockout_level = $2, locked_until = $3 where email = $4`, [failedAttempts, lockoutLevel, lockedUntil, email]);
                 res.status(404).json({ message: "password does not match" })
             }
         } else {
