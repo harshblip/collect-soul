@@ -91,6 +91,16 @@ router.put('/rename', auth, [query('newFileName').trim().escape().matches(/^[a-z
     }
 })
 
+router.post('/createFolder', [query('name').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder name should be in text format"), query('description').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder description should be in text format"), query('id').trim().escape().isInt().withMessage("id should be a number")], async (req, res) => {
+    try {
+        const message = await createFolder(req, res);
+        return res.status(201).json({ message: message });
+    } catch {
+        console.error("error", err);
+        return res.status(500).json({ message: `error occured in creating new folder:  ${err} ` });
+    }
+})
+
 router.put('/', async (req, res) => {
     try {
         const message = await postMedia(req, res);

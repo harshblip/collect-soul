@@ -393,6 +393,19 @@ const renameMedia = async (req, res) => {
     // return message
 }
 
+const createFolder = async (req, res) => {
+    const { id, name, description, is_locked } = req.body;
+    try {
+        const query = `insert into folders (id, name, description, is_locked) values ($1, $2, $3, $4)`
+        await pool.query(query, [id, name, description, is_locked])
+        message = "new folder created"
+        return message
+    } catch (err) {
+        message = err.message;
+        return message
+    }
+}
+
 const getImageByFolder = (req, res) => {
 
 }
@@ -401,4 +414,4 @@ const getVideosByFolder = (req, res) => {
 
 }
 
-module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia };
+module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder };
