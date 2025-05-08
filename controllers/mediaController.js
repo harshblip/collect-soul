@@ -393,10 +393,10 @@ const renameMedia = async (req, res) => {
     // return message
 }
 
-const createFolder = async (req, res) => {
+const createFolder = async (req, _) => {
     const { id, name, description, is_locked } = req.body;
     try {
-        const query = `insert into folders (id, name, description, is_locked) values ($1, $2, $3, $4)`
+        const query = `insert into folders (user_id, name, description, is_locked) values ($1, $2, $3, $4)`
         await pool.query(query, [id, name, description, is_locked])
         message = "new folder created"
         return message

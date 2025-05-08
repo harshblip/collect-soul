@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middlewares/authMiddleware')
 
-const { query, validationResult } = require('express-validator')
+const { body, query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, getVideos, deleteMedia, renameMedia } = require('../controllers/mediaController');
+const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder } = require('../controllers/mediaController');
 const limiter = require('../middlewares/rateLimiter');
 
 router.get('/getImages', auth, [
@@ -91,17 +91,17 @@ router.put('/rename', auth, [query('newFileName').trim().escape().matches(/^[a-z
     }
 })
 
-router.post('/createFolder', [query('name').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder name should be in text format"), query('description').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder description should be in text format"), query('id').trim().escape().isInt().withMessage("id should be a number")], async (req, res) => {
+router.post('/createFolder', [body('name').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder name should be in text format"), body('description').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder description should be in text format"), body('id').trim().escape().isInt().withMessage("id should be a number")], async (req, res) => {
     try {
         const message = await createFolder(req, res);
         return res.status(201).json({ message: message });
-    } catch {
+    } catch (err) {
         console.error("error", err);
-        return res.status(500).json({ message: `error occured in creating new folder:  ${err} ` });
+        return res.status(500).json({ message: `error occured in creating new folder: ${err} ` });
     }
 })
 
-router.put('/', async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         const message = await postMedia(req, res);
         console.log("message: ", message)
