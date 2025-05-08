@@ -23,7 +23,7 @@ function byteToSize(kb) {
 
 let message = '';
 
-const postMedia = async (req, res) => {
+const postMedia = async (req, _) => {
     return new Promise((res, rej) => {
         upload.array('file')(req, res, async (err) => {
             if (err) {
@@ -229,7 +229,7 @@ const postMedia = async (req, res) => {
 };
 
 
-const getImages = async (req, res) => {
+const getImages = async (req, _) => {
     const { id } = req.query;
     try {
         if (!id) {
@@ -249,7 +249,7 @@ const getImages = async (req, res) => {
 
 }
 
-const deleteMedia = async (req, res) => {
+const deleteMedia = async (req, _) => {
     const { username, files, id } = req.query;
     try {
         for (const fileName of files) {
@@ -293,7 +293,7 @@ const deleteMedia = async (req, res) => {
 }
 
 
-const getVideos = async (req, res) => {
+const getVideos = async (req, _) => {
     const { id } = req.query;
     try {
         if (!id) {
@@ -311,7 +311,7 @@ const getVideos = async (req, res) => {
     }
 }
 
-const renameMedia = async (req, res) => {
+const renameMedia = async (req, _) => {
     const { username, oldFileName, newFileName, user_id, type } = req.body;
     console.log(username, oldFileName, newFileName)
     const oldPrefix = `${username}/${oldFileName}/`
@@ -385,9 +385,6 @@ const renameMedia = async (req, res) => {
     } catch (err) {
         console.log("error in renameMedia: ", err);
         message = err.message;
-        if (!res.headersSent) {
-            return message = err.message
-        }
         return message
     }
     // return message
@@ -397,8 +394,22 @@ const createFolder = async (req, _) => {
     const { id, name, description, is_locked } = req.body;
     try {
         const query = `insert into folders (user_id, name, description, is_locked) values ($1, $2, $3, $4)`
-        // await pool.query(query, [id, name, description, is_locked])
+        await pool.query(query, [id, name, description, is_locked])
         message = "new folder created"
+        return message
+    } catch (err) {
+        message = err.message;
+        return message
+    }
+}
+
+const getFolders = async (req, _) => {
+    const { id } = req.query
+    try {
+        const query = `select * from folders where user_id = $1`
+        const result = await pool.query(query, [id])
+        console.log("folders: ", result.rows)
+        message = result.rows
         return message
     } catch (err) {
         message = err.message;
@@ -414,4 +425,4 @@ const getVideosByFolder = (req, res) => {
 
 }
 
-module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder };
+module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders };

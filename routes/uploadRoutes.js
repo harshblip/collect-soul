@@ -4,7 +4,7 @@ const auth = require('../middlewares/authMiddleware')
 
 const { body, query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder } = require('../controllers/mediaController');
+const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders } = require('../controllers/mediaController');
 const limiter = require('../middlewares/rateLimiter');
 
 router.get('/getImages', auth, [
@@ -104,6 +104,18 @@ router.post('/createFolder', [
     } catch (err) {
         console.error("error", err);
         return res.status(500).json({ message: `error occured in creating new folder: ${err} ` });
+    }
+})
+
+router.get('/getFolders', [
+    query('id').trim().escape().isInt().withMessage("id should be a number")
+], async (req, res) => {
+    try {
+        const message = await getFolders(req, res)
+        return res.status(200).json({ message: message })
+    } catch (err) {
+        console.error("error", err);
+        return res.status(500).json({ message: `error occured in getting folders:  ${err} ` });
     }
 })
 
