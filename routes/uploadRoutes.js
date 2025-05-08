@@ -12,11 +12,9 @@ router.get('/getImages', auth, [
 ], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();
-
+    console.log(errors)
     if (!error.isEmpty()) {
-        const errArray = errors.array();
-        console.log("errArray", errArray)
-        return res.status(400).json({ message: errArray[0].msg })
+        return res.status(400).json({ message: errors[0].msg })
     }
     try {
         const message = await getImages(req, res);
@@ -36,12 +34,10 @@ router.get('/getVideos', auth, [
 ], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();
-
+    console.log(errors)
     if (!error.isEmpty()) {
-        const errArray = errors.array();
-        return res.status(400).json({ message: errArray[0].msg })
+        return res.status(400).json({ message: errors[0].msg })
     }
-
     try {
         const message = await getVideos(req, res);
         return res.status(200).json({ message: message })
@@ -60,7 +56,6 @@ router.delete('/deleteMedia', auth, [
     const errors = error.array();
     console.log(errors)
     if (!error.isEmpty()) {
-        // const errArray = errors.array();
         return res.status(400).json({ message: errors[0].msg })
     }
     try {
@@ -73,12 +68,13 @@ router.delete('/deleteMedia', auth, [
 
 })
 
-router.put('/rename', auth, [query('newFileName').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("filename should be in text format")], async (req, res) => {
+router.put('/rename', auth, [
+    query('newFileName').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("filename should be in text format")
+], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();
     console.log(errors)
     if (!error.isEmpty()) {
-        // const errArray = errors.array();
         return res.status(400).json({ message: errors[0].msg })
     }
     try {
@@ -91,7 +87,17 @@ router.put('/rename', auth, [query('newFileName').trim().escape().matches(/^[a-z
     }
 })
 
-router.post('/createFolder', [body('name').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder name should be in text format"), body('description').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder description should be in text format"), body('id').trim().escape().isInt().withMessage("id should be a number")], async (req, res) => {
+router.post('/createFolder', [
+    body('name').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder name should be in text format"),
+    body('description').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder description should be in text format"),
+    body('id').trim().escape().isInt().withMessage("id should be a number")
+], async (req, res) => {
+    const error = validationResult(req);
+    const errors = error.array();
+    console.log(errors)
+    if (!error.isEmpty()) {
+        return res.status(400).json({ message: errors[0].msg })
+    }
     try {
         const message = await createFolder(req, res);
         return res.status(201).json({ message: message });
