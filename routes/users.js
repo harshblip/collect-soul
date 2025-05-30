@@ -48,16 +48,16 @@ router.patch('/update', auth, [
     return message
 })
 
-router.get('/login', limiter, [
+router.get('/login', [
     query('email').trim().escape().isEmail().withMessage("email is not valid"),
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        message = error[0].msg
-        return message
+        const message = error[0].msg
+        return res.status(400).json({ message })
     }
-    const message = await loginUser(req, res);
+    const { message } = await loginUser(req, res);
     return message
 })
 

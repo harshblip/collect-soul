@@ -8,9 +8,9 @@ const getUsers = async (email) => {
         const result = await pool.query(query, [email]);
         const ans = result.rows[0];
         console.log("getUsers", ans);
-        return ans;
+        return ans
     } catch (err) {
-        console.error(err);
+        console.log(err)
     }
 }
 
@@ -32,10 +32,10 @@ const createUsers = async (req, res) => {
 
         const result = await pool.query(query, [username, email, hashedPassword]);
         console.log(result);
-        res.status(201).json({ message: "user signed up successfully", result: result.rows });
+        return res.status(201).json({ message: "user signed up successfully", result: result.rows });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "internal server error" })
+        return res.status(500).json({ message: err.message })
     }
 }
 
@@ -48,16 +48,17 @@ const loginUser = async (req, res) => {
     try {
         if (ans) {
             const passwordCheck = await bcrypt.compare(password, ans.password_hash);
-            const payload = {
-                email: email,
-                id: ans.id
-            }
 
             const now = new Date();
             if (ans.locked_until && now < ans.locked_until) {
                 const remaining = Math.ceil((ans.locked_until - now) / 1000);
                 message = `Account locked. Try again in ${remaining}s`
-                return message
+                return res.status(403).json({ message })
+            }
+
+            const payload = {
+                email: email,
+                id: ans.id
             }
 
             // console.log(payload)
@@ -71,7 +72,7 @@ const loginUser = async (req, res) => {
                     sameSite: 'Strict'
                 })
 
-                res.status(200).json({ message: "user logged in successfully", access_token })
+                return res.status(200).json({ message: "user logged in successfully", access_token })
             } else {
                 let failedAttempts = ans.failed_attempts + 1;
                 let lockoutLevel = ans.lockout_level;
@@ -86,16 +87,16 @@ const loginUser = async (req, res) => {
 
                 await pool.query(`update users set failed_attempts = $1, lockout_level = $2, locked_until = $3 where email = $4`, [failedAttempts, lockoutLevel, lockedUntil, email]);
                 message = "password does not match"
-                return message
+                return res.status(400).json({ message })
             }
         } else {
             message = "no such account found. try signing up"
-            return message
+            return res.status(404).json({ message })
         }
     } catch (err) {
         console.error(err);
         message = err.message
-        return message
+        return res.status(500).json({ message })
     }
 }
 
@@ -103,10 +104,10 @@ const logoutUser = async (req, res) => {
     try {
         //  secure: true // write this fro when hosting the backend
         res.clearCookie("refreshToken", { httpOnly: true, sameSite: 'Strict' })
-        res.status(200).json({ message: "logout successful" })
+        return res.status(200).json({ message: "logout successful" })
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.message })
+        return res.status(500).json({ message: err.message })
     }
 }
 
@@ -121,13 +122,13 @@ const deleteUser = async (req, res) => {
         const checkDelete = await getUsers(email);
         console.log(checkDelete)
         if (checkDelete) {
-            res.status(204).json({ message: "account deleted successfully" });
+            return res.status(204).json({ message: "account deleted successfully" });
         } else {
-            res.status(404).json({ message: "error while deleting user record" })
+            return res.status(404).json({ message: "error while deleting user record" })
         }
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.message })
+        return res.status(500).json({ message: err.message })
     }
 }
 
@@ -141,13 +142,13 @@ const updateUser = async (req, res) => {
         const check = await pool.query(query, [username, email, password, id]);
         console.log("check", check);
         if (check.rowCount === 1) {
-            res.status(200).json({ message: "account successfully updated" })
+            return res.status(200).json({ message: "account successfully updated" })
         } else {
-            res.status(404).json({ message: "no such account found" })
+            return res.status(404).json({ message: "no such account found" })
         }
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.name })
+        return res.status(500).json({ message: err.name })
     }
 }
 
