@@ -12,10 +12,12 @@ router.post('/signup', [
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        const errArray = errors.array();
-        return res.status(400).json({ message: errArray[0].msg })
+        const error = errors.array();
+        message = error[0].msg
+        return message
     }
-    await createUsers(req, res);
+    const message = await createUsers(req, res);
+    return message
 })
 
 router.delete('/delete', auth, [
@@ -25,9 +27,11 @@ router.delete('/delete', auth, [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        res.status(400).json({ message: error[0].msg })
+        message = error[0].msg
+        return message
     }
-    await deleteUser(req, res);
+    const message = await deleteUser(req, res);
+    return message
 })
 
 router.patch('/update', auth, [
@@ -37,9 +41,11 @@ router.patch('/update', auth, [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        res.status(400).json({ message: error[0].msg })
+        message = error[0].msg
+        return message
     }
-    await updateUser(req, res);
+    const message = await updateUser(req, res);
+    return message
 })
 
 router.get('/login', limiter, [
@@ -48,10 +54,11 @@ router.get('/login', limiter, [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        res.status(400).json({ message: error[0].msg })
+        message = error[0].msg
+        return message
     }
     const message = await loginUser(req, res);
-    res.status(200).json({ message: message })
+    return message
 })
 
 module.exports = router;
