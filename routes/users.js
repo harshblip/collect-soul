@@ -49,7 +49,7 @@ router.patch('/update', auth, limiter, [
 })
 
 router.put('/reset-password', [
-    query('email').trim().escape().isEmail().withMessage("email is not valid"),
+    body('email').trim().escape().isEmail().withMessage("email is not valid"),
     body('password').trim().escape().isLength({ min: 6 }).withMessage("password must atleast be 6 char long")
 ], async (req, res) => {
     
