@@ -152,4 +152,29 @@ const updateUser = async (req, res) => {
     }
 }
 
-module.exports = { getUsers, createUsers, loginUser, deleteUser, updateUser, logoutUser }
+const updatePassword = async (req, res) => {
+    const { email, password } = req.query
+    console.log(email)
+    try {
+        if (!email || !password) {
+            return res.status(404).json({ message: 'email or password are absent' })
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const query = `update users set password_hash = $1 where email = $2`
+        const check = await pool.query(query, [password, email])
+
+        console.log("check new password", check.rowCount)
+        if (check.rowCount === 1) {
+            return res.status(200).json({ message: "password successfully updated" })
+        } else {
+            return res.status(404).json({ message: "no such account found" })
+        }
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: err.name })
+    }
+}
+
+module.exports = { getUsers, createUsers, loginUser, deleteUser, updateUser, logoutUser, updatePassword }
