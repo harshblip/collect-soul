@@ -1,3 +1,4 @@
+const pool = require('../config/db');
 const jwt = require('jsonwebtoken')
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET;
@@ -20,12 +21,11 @@ const authenticateToken = (req, res, next) => {
         console.log("verification start")
 
         if (err.name === "TokenExpiredError") {
-            const refreshToken = req.cookies.refreshToken;
+            const refreshToken = req.cookies.refreshToken
             console.log("expired")
             if (!refreshToken) {
-                let message = "please login again"
-                res.status(401).json({ message: "please login again" })
-                return message
+                console.log("please login again")
+                return res.status(401).json({ message: "please login again" })
             }
 
             jwt.verify(refreshToken, REFRESH_SECRET, (err, decoded) => {

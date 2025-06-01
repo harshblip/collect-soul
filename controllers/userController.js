@@ -42,9 +42,9 @@ const createUsers = async (req, res) => {
 let message = ''
 
 const loginUser = async (req, res) => {
-    const { email, password } = req.query;
+    const { email, password, checked } = req.query;
     const ans = await getUsers(email);
-    console.log("ans", ans);
+    console.log("ans", ans, checked);
     try {
         if (ans) {
             const passwordCheck = await bcrypt.compare(password, ans.password_hash);
@@ -63,14 +63,16 @@ const loginUser = async (req, res) => {
 
             // console.log(payload)
             if (passwordCheck) {
-                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '1d' })
-                const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: '1d' });
+                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '2m' })
+                const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: checked === true ? '2m' : '1d' });
 
                 res.cookie('refreshToken', refresh_token, {
                     httpOnly: true,
                     // secure: true,    
-                    sameSite: 'Strict'
+                    sameSite: 'Strict',
+                    maxAge: checked === true ? 15 * 60 * 1000 : 2 * 60 * 1000
                 })
+                console.log("cookie")
 
                 return res.status(200).json({ message: "user logged in successfully", access_token })
             } else {
@@ -163,7 +165,7 @@ const updatePassword = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const query = `update users set password_hash = $1 where email = $2`
-        const check = await pool.query(query, [password, email])
+        const check = await pool.query(query, [hashedPassword, email])
 
         console.log("check new password", check.rowCount)
         if (check.rowCount === 1) {

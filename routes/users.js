@@ -52,7 +52,6 @@ router.put('/reset-password', [
     body('email').trim().escape().isEmail().withMessage("email is not valid"),
     body('password').trim().escape().isLength({ min: 6 }).withMessage("password must atleast be 6 char long")
 ], async (req, res) => {
-    
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         const error = errors.array();
@@ -63,7 +62,7 @@ router.put('/reset-password', [
     return message
 })
 
-router.get('/login', limiter, [
+router.get('/login', [
     query('email').trim().escape().isEmail().withMessage("email is not valid"),
 ], async (req, res) => {
     const errors = validationResult(req);
