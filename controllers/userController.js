@@ -63,16 +63,15 @@ const loginUser = async (req, res) => {
 
             // console.log(payload)
             if (passwordCheck) {
-                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '2m' })
-                const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: checked === true ? '2m' : '1d' });
+                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '7d' })
+                const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: checked === true ? '7d' : '1d' });
 
                 res.cookie('refreshToken', refresh_token, {
                     httpOnly: true,
                     // secure: true,    
                     sameSite: 'Strict',
-                    maxAge: checked === true ? 15 * 60 * 1000 : 2 * 60 * 1000
+                    maxAge: checked === true ? 7 * 24 * 60 * 60 * 1000 : 24 * 60  * 60 * 1000
                 })
-                console.log("cookie")
 
                 return res.status(200).json({ message: "user logged in successfully", access_token })
             } else {
