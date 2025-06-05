@@ -28,8 +28,8 @@ const postMedia = async (req, _) => {
         upload.array('file')(req, res, async (err) => {
             if (err) {
                 console.log("multer validation error: ", err.message);
-                message = err.message
-                res(message)
+                console.error(err);
+                return res.status(500).json({ message: err.message })
             }
             try {
                 const { id } = req.body;
@@ -88,7 +88,7 @@ const postMedia = async (req, _) => {
 
                         const videoUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
 
-                        const query = `insert into videos (video_name, video_url, video_size, user_id) values ($1, $2, $3, $4)`
+                        const query = `insert into videos (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
                         await pool.query(query, [fileName, videoUrl, file.size, 3])
 
                     } else if (file.mimetype.startsWith('image/')) {
@@ -220,9 +220,8 @@ const postMedia = async (req, _) => {
                 message = "Files uploaded successfully!"
                 return message
             } catch (err) {
-                console.error("Internal error:", err.message);
-                message = `Error: ${err.message}`
-                return message
+                console.error(err);
+                return res.status(500).json({ message: err.message })
             }
         });
     })
@@ -244,7 +243,7 @@ const getImages = async (req, _) => {
     } catch (err) {
         message = err.message
         console.error(err);
-        return message
+        return res.status(500).json({ message: err.message })
     }
 
 }
@@ -287,8 +286,7 @@ const deleteMedia = async (req, _) => {
         return message
     } catch (err) {
         console.error(err);
-        message = err.message
-        return message
+        return res.status(500).json({ message: err.message })
     }
 }
 
@@ -306,8 +304,7 @@ const getVideos = async (req, _) => {
         return message
     } catch (err) {
         console.error(err);
-        message = err.message
-        return message
+        return res.status(500).json({ message: err.message })
     }
 }
 
@@ -367,7 +364,7 @@ const renameMedia = async (req, _) => {
             const query = `update audio set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
             await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
         } else {
-            const query = `update videos set video_name = $1, video_url = $2 where user_id = $3 AND video_name = $4`
+            const query = `update videos set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
             await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
         }
         // delete objects
@@ -384,8 +381,8 @@ const renameMedia = async (req, _) => {
         return message
     } catch (err) {
         console.log("error in renameMedia: ", err);
-        message = err.message;
-        return message
+        console.error(err);
+        return res.status(500).json({ message: err.message })
     }
     // return message
 }
@@ -398,8 +395,8 @@ const createFolder = async (req, _) => {
         message = "new folder created"
         return message
     } catch (err) {
-        message = err.message;
-        return message
+        console.error(err);
+        return res.status(500).json({ message: err.message })
     }
 }
 
@@ -412,8 +409,8 @@ const getFolders = async (req, _) => {
         message = result.rows
         return message
     } catch (err) {
-        message = err.message;
-        return message
+        console.error(err);
+        return res.status(500).json({ message: err.message })
     }
 }
 
@@ -423,6 +420,35 @@ const getImageByFolder = (req, res) => {
 
 const getVideosByFolder = (req, res) => {
 
+}
+
+const getAllFiles = (req, res) => {
+    const { email } = req.query
+    try {
+        const query = `
+            SELECT 
+            u.email,
+            f.file_type,
+            f.file_id,
+            f.url,
+            f.created_at
+        FROM users u
+        JOIN (
+            SELECT 'image' AS file_type, id AS file_id, user_id, url, created_at FROM images
+            UNION ALL
+            SELECT 'video' AS file_type, id AS file_id, user_id, url, created_at FROM videos
+            UNION ALL
+            SELECT 'document' AS file_type, id AS file_id, user_id, url, created_at FROM documents
+            UNION ALL
+            SELECT 'audio' AS file_type, id AS file_id, user_id, url, created_at FROM audios
+        ) AS f ON u.id = f.user_id
+        WHERE u.email = $1
+        ORDER BY f.created_at DESC;
+        `
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: err.message })
+    }
 }
 
 module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders };
