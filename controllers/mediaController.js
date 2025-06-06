@@ -422,33 +422,35 @@ const getVideosByFolder = (req, res) => {
 
 }
 
-const getAllFiles = (req, res) => {
+const getAllFiles = async (req, res) => {
     const { email } = req.query
     try {
         const query = `
-            SELECT 
+        SELECT 
             u.email,
             f.file_type,
             f.file_id,
-            f.url,
+            f.file_url,
             f.created_at
         FROM users u
         JOIN (
-            SELECT 'image' AS file_type, id AS file_id, user_id, url, created_at FROM images
+            SELECT 'image' AS file_type, id AS file_id, user_id, file_url, created_at FROM images
             UNION ALL
-            SELECT 'video' AS file_type, id AS file_id, user_id, url, created_at FROM videos
+            SELECT 'video' AS file_type, id AS file_id, user_id, file_url, created_at FROM videos
             UNION ALL
-            SELECT 'document' AS file_type, id AS file_id, user_id, url, created_at FROM documents
+            SELECT 'document' AS file_type, id AS file_id, user_id, file_url, created_at FROM documents
             UNION ALL
-            SELECT 'audio' AS file_type, id AS file_id, user_id, url, created_at FROM audios
+            SELECT 'audio' AS file_type, id AS file_id, user_id, file_url, created_at FROM audio
         ) AS f ON u.id = f.user_id
         WHERE u.email = $1
         ORDER BY f.created_at DESC;
-        `
+    `
+        const result = await pool.query(query, [email])
+        return res.status(200).json({ message: "all files retrieved successfully", result })
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: err.message })
     }
 }
 
-module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders };
+module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles };

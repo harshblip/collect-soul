@@ -4,7 +4,7 @@ const auth = require('../middlewares/authMiddleware')
 
 const { body, query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders } = require('../controllers/mediaController');
+const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles } = require('../controllers/mediaController');
 const limiter = require('../middlewares/rateLimiter');
 
 router.get('/getImages', auth, [
@@ -115,6 +115,18 @@ router.get('/getFolders', [
         return res.status(200).json({ message: message })
     } catch (err) {
         console.error("error", err);
+        return res.status(500).json({ message: `error occured in getting folders:  ${err} ` });
+    }
+})
+
+router.get('/getAllFiles', [
+    query('email').trim().escape().isEmail().withMessage("email is not valid")
+], async (req, res) => {
+    try {
+        const message = await getAllFiles(req, res);
+        return res.status(200).json({ message: message })
+    } catch (err) {
+        console.error("error: ", err)
         return res.status(500).json({ message: `error occured in getting folders:  ${err} ` });
     }
 })
