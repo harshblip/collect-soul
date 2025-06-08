@@ -455,23 +455,30 @@ const getAllFiles = async (req, res) => {
 }
 
 const trashMedia = async (req, res) => {
-    const { type, files, trashed } = req.query;
+    const { type, fileId, trashed, fileName, url, size } = req.body;
     try {
-        for (const fileId of files) {
-            const query = `update ${type} set is_trashed = $1 where id = $2`
-            const result = await pool.query(query, [trashed, fileId])
+        // for (const fileId of files) {
+        console.log(req.body)
+        if (trashed) {
+            const query1 = `update ${type} set is_trashed = $1 where id = $2`
+            await pool.query(query1, [trashed, fileId])
 
-            // if (trashed) {
-            //     const query = `insert into ${type}`
-            // }
+            const query2 = `insert into trash (file_name, file_url, size, file_id) values ($1, $2, $3, $4)`
+            await pool.query(query2, [fileName, url, size, fileId])
 
-            console.log(result)
+            res.status(201).json({ message: "media trashed" })
+        } else {
+            const query1 = `update ${type} set is_trashed = $1 where id = $2`
+            await pool.query(query1, [trashed, fileId])
+
+            const query2 = `delete from trash where file_id = $1`
+            await pool.query(query2, [fileId])
+            res.status(200).json({ message: "media recovered" })
         }
-        res.status(201).json({ message: "media trashed" })
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: err.message })
     }
 }
 
-module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles };
+module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia };
