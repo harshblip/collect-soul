@@ -212,7 +212,7 @@ const postMedia = async (req, _) => {
                         })
 
                         const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
-                        const query = `insert into audio (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
+                        const query = `insert into audios (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
                         await pool.query(query, [3, fileName, url, file.size])
 
                     }
@@ -361,7 +361,7 @@ const renameMedia = async (req, _) => {
             const query = `update documents set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
             await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
         } else if (type === 'audio') {
-            const query = `update audio set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
+            const query = `update audios set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
             await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
         } else {
             const query = `update videos set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
@@ -440,13 +440,34 @@ const getAllFiles = async (req, res) => {
             UNION ALL
             SELECT 'document' AS file_type, id AS file_id, user_id, file_url, created_at FROM documents
             UNION ALL
-            SELECT 'audio' AS file_type, id AS file_id, user_id, file_url, created_at FROM audio
+            SELECT 'audio' AS file_type, id AS file_id, user_id, file_url, created_at FROM audios
         ) AS f ON u.id = f.user_id
         WHERE u.email = $1
         ORDER BY f.created_at DESC;
     `
         const result = await pool.query(query, [email])
-        return res.status(200).json({ message: "all files retrieved successfully", result })
+        rows = result.rows
+        return res.status(200).json({ message: "all files retrieved successfully", rows })
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+const trashMedia = async (req, res) => {
+    const { type, files, trashed } = req.query;
+    try {
+        for (const fileId of files) {
+            const query = `update ${type} set is_trashed = $1 where id = $2`
+            const result = await pool.query(query, [trashed, fileId])
+
+            // if (trashed) {
+            //     const query = `insert into ${type}`
+            // }
+
+            console.log(result)
+        }
+        res.status(201).json({ message: "media trashed" })
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: err.message })

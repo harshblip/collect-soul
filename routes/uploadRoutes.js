@@ -16,17 +16,9 @@ router.get('/getImages', auth, [
     if (!error.isEmpty()) {
         return res.status(400).json({ message: errors[0].msg })
     }
-    try {
-        const message = await getImages(req, res);
-        console.log(message)
-        return res.status(200).json({ message: message })
-    } catch (err) {
-        console.log("error in getImages: ", err);
-        if (!res.headersSent) {
-            return res.status(500).json({ message: `error occured in getImages ${err}` })
-        }
-    }
-
+    const message = await getImages(req, res);
+    console.log(message)
+    return message
 })
 
 router.get('/getVideos', auth, [
@@ -38,14 +30,8 @@ router.get('/getVideos', auth, [
     if (!error.isEmpty()) {
         return res.status(400).json({ message: errors[0].msg })
     }
-    try {
-        const message = await getVideos(req, res);
-        return res.status(200).json({ message: message })
-    } catch (err) {
-        console.log("error in getVideos: ", err);
-        return res.status(500).json({ message: `error occured in getVideos ${err}` })
-    }
-
+    const message = await getVideos(req, res);
+    return message
 })
 
 router.delete('/deleteMedia', auth, [
@@ -58,14 +44,8 @@ router.delete('/deleteMedia', auth, [
     if (!error.isEmpty()) {
         return res.status(400).json({ message: errors[0].msg })
     }
-    try {
-        const message = await deleteMedia(req, res);
-        return res.status(204).json({ message: message })
-    } catch (err) {
-        console.log("error in deleteMedia: ", err);
-        return res.status(500).json({ message: `error occured in deleteMedia ${err}` })
-    }
-
+    const message = await deleteMedia(req, res);
+    return message
 })
 
 router.put('/rename', auth, [
@@ -77,14 +57,9 @@ router.put('/rename', auth, [
     if (!error.isEmpty()) {
         return res.status(400).json({ message: errors[0].msg })
     }
-    try {
-        const message = await renameMedia(req, res);
-        console.log(message)
-        return res.status(200).json({ message: message });
-    } catch (err) {
-        console.error("error", err);
-        return res.status(500).json({ message: `error occured in updating name:  ${err} ` });
-    }
+    const message = await renameMedia(req, res);
+    console.log(message)
+    return message;
 })
 
 router.post('/createFolder', [
@@ -98,37 +73,34 @@ router.post('/createFolder', [
     if (!error.isEmpty()) {
         return res.status(400).json({ message: errors[0].msg })
     }
-    try {
-        const message = await createFolder(req, res);
-        return res.status(201).json({ message: message });
-    } catch (err) {
-        console.error("error", err);
-        return res.status(500).json({ message: `error occured in creating new folder: ${err} ` });
-    }
+    const message = await createFolder(req, res);
+    return message
 })
 
 router.get('/getFolders', [
     query('id').trim().escape().isInt().withMessage("id should be a number")
 ], async (req, res) => {
-    try {
-        const message = await getFolders(req, res)
-        return res.status(200).json({ message: message })
-    } catch (err) {
-        console.error("error", err);
-        return res.status(500).json({ message: `error occured in getting folders:  ${err} ` });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        message = error[0].msg
+        return message
     }
+    const message = await getFolders(req, res)
+    return message
 })
 
-router.get('/getAllFiles', [
+router.get('/getAllFiles', auth, [
     query('email').trim().escape().isEmail().withMessage("email is not valid")
 ], async (req, res) => {
-    try {
-        const message = await getAllFiles(req, res);
-        return res.status(200).json({ message: message })
-    } catch (err) {
-        console.error("error: ", err)
-        return res.status(500).json({ message: `error occured in getting folders:  ${err} ` });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        message = error[0].msg
+        return message
     }
+    const message = await getAllFiles(req, res);
+    return message
 })
 
 router.post('/', async (req, res) => {
