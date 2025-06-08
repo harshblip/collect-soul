@@ -455,30 +455,55 @@ const getAllFiles = async (req, res) => {
 }
 
 const trashMedia = async (req, res) => {
-    const { type, fileId, trashed, fileName, url, size } = req.body;
+    const { files } = req.body;
+    const client = await pool.connect();
+
     try {
-        // for (const fileId of files) {
-        console.log(req.body)
-        if (trashed) {
+        await client.query('BEGIN')
+        for (const file of files) {
+            const { fileName, url, size, type, fileId, id } = file
+            console.log(fileName, url, size, type, fileId)
             const query1 = `update ${type} set is_trashed = $1 where id = $2`
-            await pool.query(query1, [trashed, fileId])
+            await client.query(query1, [true, fileId])
 
-            const query2 = `insert into trash (file_name, file_url, size, file_id) values ($1, $2, $3, $4)`
-            await pool.query(query2, [fileName, url, size, fileId])
-
-            res.status(201).json({ message: "media trashed" })
-        } else {
-            const query1 = `update ${type} set is_trashed = $1 where id = $2`
-            await pool.query(query1, [trashed, fileId])
-
-            const query2 = `delete from trash where file_id = $1`
-            await pool.query(query2, [fileId])
-            res.status(200).json({ message: "media recovered" })
+            const query2 = `insert into trash (file_name, file_url, size, user_id, file_type, file_id) values ($1, $2, $3, $4, $5, $6)`
+            await client.query(query2, [fileName, url, size, id, type, fileId])
         }
+        await client.query('COMMIT')
+        res.status(200).json({ message: "media trashed" })
     } catch (err) {
+        await client.query('ROLLBACK')
         console.error(err);
         return res.status(500).json({ message: err.message })
+    } finally {
+        client.release()
     }
 }
 
-module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia };
+const recoverMedia = async (req, res) => {
+    const { files } = req.body;
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN')
+        for (const file of files) {
+            const { type, fileId, id } = file
+            // console.log(fileName, url, size, type, fileId)
+            const query1 = `update ${type} set is_trashed = $1 where id = $2`
+            await client.query(query1, [false, fileId])
+
+            const query2 = `delete from trash where id = $1`
+            await client.query(query2, [id])
+        }
+        await client.query('COMMIT')
+        res.status(200).json({ message: "media recovered" })
+    } catch (err) {
+        await client.query('ROLLBACK')
+        console.error(err);
+        return res.status(500).json({ message: err.message })
+    } finally {
+        client.release()
+    }
+}
+
+module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia };
