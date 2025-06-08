@@ -7,11 +7,13 @@ const cors = require('cors');
 const uploadRoutes = require('./routes/uploadRoutes')
 const userRoutes = require('./routes/users')
 const limiter = require('./middlewares/rateLimiter')
+const trashCleanup = require('./jobs/trashCleanup')
 
 const app = express();
 const port = 4000;
 
 app.use(cors());
+trashCleanup()
 
 console.log(process.env.USER);
 
