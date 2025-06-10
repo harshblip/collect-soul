@@ -218,7 +218,7 @@ const postMedia = async (req, _) => {
                     }
                 }
                 message = "Files uploaded successfully!"
-                return message
+                return res.status(201).json({ message: message })
             } catch (err) {
                 console.error(err);
                 return res.status(500).json({ message: err.message })
@@ -239,7 +239,7 @@ const getImages = async (req, _) => {
         const result = await pool.query(query, [id]);
         // console.log(result.rows)
         images = result.rows
-        return images
+        return res.status(200).json({ message: images })
     } catch (err) {
         message = err.message
         console.error(err);
@@ -283,7 +283,7 @@ const deleteMedia = async (req, _) => {
         } else {
             message = "image deleted successfully !"
         }
-        return message
+        return res.status(200).json({ message: message })
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: err.message })
@@ -301,7 +301,7 @@ const getVideos = async (req, _) => {
         const query = `select * from videos where user_id = $1`;
         await pool.query(query, [id]);
         message = "videos retrieved"
-        return message
+        return res.status(200).json({ message: message })
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: err.message })
@@ -325,7 +325,7 @@ const renameMedia = async (req, _) => {
 
         if (!listedObjects.Contents.length) {
             message = "No files found under the old folder name."
-            return message
+            return res.status(404).json({ message: message })
         }
 
         let urls = []
@@ -378,7 +378,7 @@ const renameMedia = async (req, _) => {
         await s3.deleteObjects(deleteParams).promise()
 
         message = "files renamed!"
-        return message
+        return res.status(201).json({ message: message })
     } catch (err) {
         console.log("error in renameMedia: ", err);
         console.error(err);
@@ -393,7 +393,7 @@ const createFolder = async (req, _) => {
         const query = `insert into folders (user_id, name, description, is_locked) values ($1, $2, $3, $4)`
         await pool.query(query, [id, name, description, is_locked])
         message = "new folder created"
-        return message
+        return res.status(201).json({ message: message })
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: err.message })
@@ -407,7 +407,7 @@ const getFolders = async (req, _) => {
         const result = await pool.query(query, [id])
         console.log("folders: ", result.rows)
         message = result.rows
-        return message
+        return res.status(200).json({ message: result.rows })
     } catch (err) {
         console.error(err);
         return res.status(500).json({ message: err.message })
