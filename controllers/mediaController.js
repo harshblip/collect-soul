@@ -32,11 +32,9 @@ const postMedia = async (req, _) => {
                 return res.status(500).json({ message: err.message })
             }
             try {
-                const { id } = req.body;
                 const username = req.body.username;
                 const files = req.files;
-                const response = [];
-
+                
                 const userFolderKey = `${username}`;
 
                 const listParams = {
@@ -427,29 +425,54 @@ const getAllFiles = async (req, res) => {
     try {
         const query = `
         SELECT 
-            u.email,
             f.file_type,
             f.file_id,
             f.file_url,
             f.created_at
         FROM users u
         JOIN (
-            SELECT 'image' AS file_type, id AS file_id, user_id, file_url, created_at FROM images
+            SELECT 'images' AS file_type, id AS file_id, user_id, file_url, created_at FROM images
             UNION ALL
-            SELECT 'video' AS file_type, id AS file_id, user_id, file_url, created_at FROM videos
+            SELECT 'videos' AS file_type, id AS file_id, user_id, file_url, created_at FROM videos
             UNION ALL
-            SELECT 'document' AS file_type, id AS file_id, user_id, file_url, created_at FROM documents
+            SELECT 'documents' AS file_type, id AS file_id, user_id, file_url, created_at FROM documents
             UNION ALL
-            SELECT 'audio' AS file_type, id AS file_id, user_id, file_url, created_at FROM audios
+            SELECT 'audios' AS file_type, id AS file_id, user_id, file_url, created_at FROM audios
+            UNION ALL
+            SELECT 'folders' AS file_type, id AS file_id, user_id, name, created_at FROM folders
         ) AS f ON u.id = f.user_id
         WHERE u.email = $1
         ORDER BY f.created_at DESC;
     `
         const result = await pool.query(query, [email])
         rows = result.rows
-        return res.status(200).json({ message: "all files retrieved successfully", rows })
+        return res.status(200).json({ message: rows })
     } catch (err) {
         console.error(err);
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+const folderItems = async (req, res) => {
+    const { userId, folderId } = req.query
+    try {
+        const query = `
+            WITH files_union AS (
+                SELECT id, file_name, file_url, size, folder_id, user_id, 'image' AS file_type FROM images
+                UNION ALL
+                SELECT id, file_name, file_url, size, folder_id, user_id, 'video' AS file_type FROM videos
+                UNION ALL
+                SELECT id, file_name, file_url, size, folder_id, user_id, 'document' AS file_type FROM documents
+                UNION ALL
+                SELECT id, file_name, file_url, size, folder_id, user_id, 'audio' AS file_type FROM audios
+            )
+            SELECT *
+            FROM files_union
+            WHERE folder_id = $1 AND user_id = $2;
+        `
+        const result = await pool.query(query, [userId, folderId])
+        res.status(200).json({ message: result.rows })
+    } catch (err) {
         return res.status(500).json({ message: err.message })
     }
 }
@@ -506,4 +529,4 @@ const recoverMedia = async (req, res) => {
     }
 }
 
-module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia };
+module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems };
