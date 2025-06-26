@@ -34,7 +34,7 @@ const postMedia = async (req, _) => {
             try {
                 const username = req.body.username;
                 const files = req.files;
-                
+
                 const userFolderKey = `${username}`;
 
                 const listParams = {
@@ -226,15 +226,15 @@ const postMedia = async (req, _) => {
 };
 
 
-const getImages = async (req, _) => {
-    const { id } = req.query;
+const getFileInfo = async (req, res) => {
+    const { user_id, id } = req.query;
     try {
         if (!id) {
-            message = "userid is needed to get their images"
+            message = "query is empty"
             return message;
         }
-        const query = `select * from images where user_id = $1`;
-        const result = await pool.query(query, [id]);
+        const query = `select * from images where user_id = $1 and id = $2`;
+        const result = await pool.query(query, [user_id, id]);
         // console.log(result.rows)
         images = result.rows
         return res.status(200).json({ message: images })
@@ -424,26 +424,37 @@ const getAllFiles = async (req, res) => {
     const { email } = req.query
     try {
         const query = `
-        SELECT 
-            f.file_type,
-            f.file_id,
-            f.file_url,
-            f.created_at
-        FROM users u
-        JOIN (
-            SELECT 'images' AS file_type, id AS file_id, user_id, file_url, created_at FROM images
-            UNION ALL
-            SELECT 'videos' AS file_type, id AS file_id, user_id, file_url, created_at FROM videos
-            UNION ALL
-            SELECT 'documents' AS file_type, id AS file_id, user_id, file_url, created_at FROM documents
-            UNION ALL
-            SELECT 'audios' AS file_type, id AS file_id, user_id, file_url, created_at FROM audios
-            UNION ALL
-            SELECT 'folders' AS file_type, id AS file_id, user_id, name, created_at FROM folders
-        ) AS f ON u.id = f.user_id
-        WHERE u.email = $1
-        ORDER BY f.created_at DESC;
-    `
+            SELECT 
+                f.file_type,
+                f.file_name,
+                f.file_id,
+                f.file_url,
+                f.size,
+                f.created_at
+            FROM users u
+            JOIN (
+                SELECT 'images' AS file_type, id AS file_id, user_id, file_name, file_url, size, created_at FROM images
+                UNION ALL
+                SELECT 'videos' AS file_type, id AS file_id, user_id, file_name, file_url, size, created_at FROM videos
+                UNION ALL
+                SELECT 'documents' AS file_type, id AS file_id, user_id, file_name, file_url, size, created_at FROM documents
+                UNION ALL
+                SELECT 'audios' AS file_type, id AS file_id, user_id, file_name, file_url, size, created_at FROM audios
+                UNION ALL
+                SELECT 
+                    'folders' AS file_type, 
+                    id AS file_id, 
+                    user_id, 
+                    name AS file_name, 
+                    NULL::TEXT AS file_url, 
+                    NULL::BIGINT AS size, 
+                    created_at 
+                FROM folders
+            ) AS f ON u.id = f.user_id
+            WHERE u.email = $1
+            ORDER BY f.created_at DESC;
+        `;
+
         const result = await pool.query(query, [email])
         rows = result.rows
         return res.status(200).json({ message: rows })
@@ -529,4 +540,16 @@ const recoverMedia = async (req, res) => {
     }
 }
 
-module.exports = { postMedia, getImages, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems };
+const starFile = async (req, res) => {
+    const { userId, id } = req.body;
+
+    try {
+        const query = `update images set starred = not starred where user_id = $1 and id = $2`
+        await pool.query(query, [userId, id])
+        res.status(201).json({ message: 'file starred' })
+    } catch (err) {
+        res.status(500).json({ message: err.message })
+    }
+}
+
+module.exports = { postMedia, getFileInfo, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile };
