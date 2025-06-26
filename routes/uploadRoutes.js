@@ -4,7 +4,7 @@ const auth = require('../middlewares/authMiddleware')
 
 const { body, query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile } = require('../controllers/mediaController');
+const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars } = require('../controllers/mediaController');
 const limiter = require('../middlewares/rateLimiter');
 
 router.get('/getImages', auth, [
@@ -122,8 +122,21 @@ router.get('/folderItems', [
 })
 
 router.post('/starFile', [
+    body('userId').trim().escape().isInt().withMessage("userId should be a number"),
+    body('id').trim().escape().isInt().withMessage("id should be a number")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return message
+    }
+    const message = await starFile(req, res)
+    return message
+})
+
+router.get('/getStars', [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
-    query('id').trim().escape().isInt().withMessage("id should be a number")
 ], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -131,7 +144,7 @@ router.post('/starFile', [
         message = error[0].msg
         return message
     }
-    const message = await starFile(req, res)
+    const message = await getStars(req, res)
     return message
 })
 

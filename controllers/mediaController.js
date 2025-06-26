@@ -546,10 +546,23 @@ const starFile = async (req, res) => {
     try {
         const query = `update images set starred = not starred where user_id = $1 and id = $2`
         await pool.query(query, [userId, id])
-        res.status(201).json({ message: 'file starred' })
+        return res.status(201).json({ message: 'file starred' })
     } catch (err) {
-        res.status(500).json({ message: err.message })
+        return res.status(500).json({ message: err.message })
     }
 }
 
-module.exports = { postMedia, getFileInfo, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile };
+const getStars = async (req, res) => {
+    const { userId } = req.query;
+
+    try {
+        const query = `select * from images where user_id = $1 and starred = $2`
+        const result = await pool.query(query, [userId, true])
+
+        return res.status(200).json({ message: result.rows })
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+module.exports = { postMedia, getFileInfo, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars };
