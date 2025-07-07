@@ -14,13 +14,6 @@ const s3 = new aws.S3({
     signatureVersion: 'v4'
 });
 
-function byteToSize(kb) {
-    const arr = ['bytes', 'KB', 'MB']
-    const i = parseInt(Math.floor(Math.log(kb) / Math.log(1024)), 10)
-    if (i === 0) return i;
-    return `${(kb / (1024 ** i)).toFixed(1)}${arr[i]}`
-}
-
 let message = '';
 
 const postMedia = async (req, _) => {
@@ -86,8 +79,8 @@ const postMedia = async (req, _) => {
 
                         const videoUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
 
-                        const query = `insert into videos (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
-                        await pool.query(query, [fileName, videoUrl, file.size, 3])
+                        const query = `insert into files (file_name, file_url, size, user_id, file_type) values ($1, $2, $3, $4, $5)`
+                        await pool.query(query, [fileName, videoUrl, file.size, 3, 'video'])
 
                     } else if (file.mimetype.startsWith('image/')) {
                         const originalImage = file.buffer;
@@ -97,23 +90,14 @@ const postMedia = async (req, _) => {
                             return res(message)
                         }
 
-                        const thumbnailImage = await sharp(file.buffer)
-                            .resize(150)
-                            .webp({ quality: 80 })
-                            .toBuffer()
-                        const displayImage = await sharp(file.buffer)
-                            .resize(800)
-                            .webp({ quality: 90 })
-                            .toBuffer()
-
-                        const uploadOriginalImage = {
+                        const uploadImage = {
                             Bucket: process.env.S3_BUCKET_NAME,
                             Key: fileKey,
                             Expires: 60,
                             ContentType: file.mimetype
                         }
 
-                        const originalUpload = s3.getSignedUrl('putObject', uploadOriginalImage);
+                        const originalUpload = s3.getSignedUrl('putObject', uploadImage);
 
                         await axios.put(originalUpload, originalImage, {
                             headers: {
@@ -121,46 +105,10 @@ const postMedia = async (req, _) => {
                             }
                         })
 
-                        const originalImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
+                        const imageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
 
-                        const tfileKey = `${mediaFolderKey}${fileName}_thumbnail.webp`;
-                        const uploadthumbnailImage = {
-                            Bucket: process.env.S3_BUCKET_NAME,
-                            Key: tfileKey,
-                            Expires: 60,
-                            ContentType: 'image/webp'
-                        }
-
-                        const thumbnailUpload = s3.getSignedUrl('putObject', uploadthumbnailImage);
-
-                        await axios.put(thumbnailUpload, thumbnailImage, {
-                            headers: {
-                                'Content-Type': file.mimetype
-                            }
-                        })
-
-                        const thumbmailImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${tfileKey}`
-
-                        const dfileKey = `${mediaFolderKey}${fileName}_display.webp`;
-                        const uploaddisplayImage = {
-                            Bucket: process.env.S3_BUCKET_NAME,
-                            Key: dfileKey,
-                            Expires: 60,
-                            ContentType: 'image/webp'
-                        }
-
-                        const displayUpload = s3.getSignedUrl('putObject', uploaddisplayImage);
-
-                        await axios.put(displayUpload, displayImage, {
-                            headers: {
-                                'Content-Type': file.mimetype
-                            }
-                        })
-
-                        const displayImageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${dfileKey}`;
-
-                        const query = `insert into images (file_name, file_url, thumbnail_image_url, display_image_url, size, user_id) values ($1, $2, $3, $4, $5, $6)`
-                        await pool.query(query, [fileName, originalImageUrl, thumbmailImageUrl, displayImageUrl, file.size, 3]);
+                        const query = `insert into files (file_name, file_url, size, user_id, file_type) values ($1, $2, $3, $4, $5)`
+                        await pool.query(query, [fileName, imageUrl, file.size, 3, 'image']);
 
                     } else if (file.mimetype.startsWith('application/')) {
                         const fileo = file.buffer;
@@ -184,8 +132,8 @@ const postMedia = async (req, _) => {
                             }
                         })
                         const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-                        const query = `insert into documents (file_name, file_url, size, user_id) values ($1, $2, $3, $4)`
-                        await pool.query(query, [fileName, url, file.size, 3])
+                        const query = `insert into files (file_name, file_url, size, user_id, file_type) values ($1, $2, $3, $4, $5)`
+                        await pool.query(query, [fileName, url, file.size, 3, 'document'])
                     } else {
                         const fileo = file.buffer;
 
@@ -210,8 +158,8 @@ const postMedia = async (req, _) => {
                         })
 
                         const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
-                        const query = `insert into audios (user_id, file_name, file_url, size) values ($1, $2, $3, $4)`;
-                        await pool.query(query, [3, fileName, url, file.size])
+                        const query = `insert into files (user_id, file_name, file_url, size, file_type) values ($1, $2, $3, $4, $5)`;
+                        await pool.query(query, [3, fileName, url, file.size, 'audio'])
 
                     }
                 }
@@ -233,7 +181,7 @@ const getFileInfo = async (req, res) => {
             message = "query is empty"
             return message;
         }
-        const query = `select * from images where user_id = $1 and id = $2`;
+        const query = `select * from files where user_id = $1 and id = $2`;
         const result = await pool.query(query, [user_id, id]);
         // console.log(result.rows)
         images = result.rows
@@ -273,32 +221,14 @@ const deleteMedia = async (req, _) => {
 
             await s3.deleteObjects(deleteParam).promise();
 
-            const query = `delete from images where file_name = $1 and user_id = $2`;
+            const query = `delete from files where file_name = $1 and user_id = $2`;
             pool.query(query, [fileName, id]);
         }
         if (files.length > 1) {
-            message = "images deleted successfully !"
+            message = "files deleted successfully !"
         } else {
-            message = "image deleted successfully !"
+            message = "file deleted successfully !"
         }
-        return res.status(200).json({ message: message })
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: err.message })
-    }
-}
-
-
-const getVideos = async (req, _) => {
-    const { id } = req.query;
-    try {
-        if (!id) {
-            message = "user id is missing"
-            return message
-        }
-        const query = `select * from videos where user_id = $1`;
-        await pool.query(query, [id]);
-        message = "videos retrieved"
         return res.status(200).json({ message: message })
     } catch (err) {
         console.error(err);
@@ -352,19 +282,8 @@ const renameMedia = async (req, _) => {
 
         // console.log(urls[1]);
 
-        if (type === 'image') {
-            const query = `update images set file_name = $1, file_url = $4, display_image_url = $5, thumbnail_image_url = $6 where user_id = $2 AND file_name = $3`
-            await pool.query(query, [newFileName, user_id, oldFileName, urls[1], urls[2], urls[3]])
-        } else if (type === 'documents') {
-            const query = `update documents set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
-            await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
-        } else if (type === 'audio') {
-            const query = `update audios set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
-            await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
-        } else {
-            const query = `update videos set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
-            await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
-        }
+        const query = `update files set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
+        await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
         // delete objects
         const deleteParams = {
             Bucket: bucketName,
@@ -416,46 +335,15 @@ const getImageByFolder = (req, res) => {
 
 }
 
-const getVideosByFolder = (req, res) => {
-
-}
-
 const getAllFiles = async (req, res) => {
-    const { email } = req.query
+    const { user_id } = req.query
     try {
         const query = `
-            SELECT 
-                f.file_type,
-                f.file_name,
-                f.file_id,
-                f.file_url,
-                f.size,
-                f.created_at
-            FROM users u
-            JOIN (
-                SELECT 'images' AS file_type, id AS file_id, user_id, file_name, file_url, size, created_at FROM images
-                UNION ALL
-                SELECT 'videos' AS file_type, id AS file_id, user_id, file_name, file_url, size, created_at FROM videos
-                UNION ALL
-                SELECT 'documents' AS file_type, id AS file_id, user_id, file_name, file_url, size, created_at FROM documents
-                UNION ALL
-                SELECT 'audios' AS file_type, id AS file_id, user_id, file_name, file_url, size, created_at FROM audios
-                UNION ALL
-                SELECT 
-                    'folders' AS file_type, 
-                    id AS file_id, 
-                    user_id, 
-                    name AS file_name, 
-                    NULL::TEXT AS file_url, 
-                    NULL::BIGINT AS size, 
-                    created_at 
-                FROM folders
-            ) AS f ON u.id = f.user_id
-            WHERE u.email = $1
-            ORDER BY f.created_at DESC;
-        `;
+        SELECT * FROM files 
+        WHERE user_id = $1 
+        ORDER BY f.created_at DESC;`
 
-        const result = await pool.query(query, [email])
+        const result = await pool.query(query, [user_id])
         rows = result.rows
         return res.status(200).json({ message: rows })
     } catch (err) {
@@ -467,20 +355,7 @@ const getAllFiles = async (req, res) => {
 const folderItems = async (req, res) => {
     const { userId, folderId } = req.query
     try {
-        const query = `
-            WITH files_union AS (
-                SELECT id, file_name, file_url, size, folder_id, user_id, 'image' AS file_type FROM images
-                UNION ALL
-                SELECT id, file_name, file_url, size, folder_id, user_id, 'video' AS file_type FROM videos
-                UNION ALL
-                SELECT id, file_name, file_url, size, folder_id, user_id, 'document' AS file_type FROM documents
-                UNION ALL
-                SELECT id, file_name, file_url, size, folder_id, user_id, 'audio' AS file_type FROM audios
-            )
-            SELECT *
-            FROM files_union
-            WHERE folder_id = $1 AND user_id = $2;
-        `
+        const query = `SELECT * FROM files WHERE folder_id = $1 AND user_id = $2;`
         const result = await pool.query(query, [userId, folderId])
         res.status(200).json({ message: result.rows })
     } catch (err) {
@@ -497,7 +372,7 @@ const trashMedia = async (req, res) => {
         for (const file of files) {
             const { fileName, url, size, type, fileId, id } = file
             console.log(fileName, url, size, type, fileId)
-            const query1 = `update ${type} set is_trashed = $1 where id = $2`
+            const query1 = `update files set is_trashed = $1 where id = $2`
             await client.query(query1, [true, fileId])
 
             const query2 = `insert into trash (file_name, file_url, size, user_id, file_type, file_id) values ($1, $2, $3, $4, $5, $6)`
@@ -521,9 +396,9 @@ const recoverMedia = async (req, res) => {
     try {
         await client.query('BEGIN')
         for (const file of files) {
-            const { type, fileId, id } = file
-            // console.log(fileName, url, size, type, fileId)
-            const query1 = `update ${type} set is_trashed = $1 where id = $2`
+            const { fileId, id } = file
+            // console.log(fileName, url, size, fileId)
+            const query1 = `update files set is_trashed = $1 where id = $2`
             await client.query(query1, [false, fileId])
 
             const query2 = `delete from trash where id = $1`
@@ -544,7 +419,7 @@ const starFile = async (req, res) => {
     const { userId, id } = req.body;
 
     try {
-        const query = `update images set starred = not starred where user_id = $1 and id = $2`
+        const query = `update files set starred = not starred where user_id = $1 and id = $2`
         await pool.query(query, [userId, id])
         return res.status(201).json({ message: 'file starred' })
     } catch (err) {
