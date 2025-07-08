@@ -1,4 +1,3 @@
-const pool = require('../config/db');
 const jwt = require('jsonwebtoken')
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET;

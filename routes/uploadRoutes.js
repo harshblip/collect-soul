@@ -4,7 +4,7 @@ const auth = require('../middlewares/authMiddleware')
 
 const { body, query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars } = require('../controllers/mediaController');
+const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, getFileInfoController } = require('../media/controller');
 const limiter = require('../middlewares/rateLimiter');
 
 router.get('/getImages', auth, [
@@ -145,6 +145,19 @@ router.get('/getStars', [
         return message
     }
     const message = await getStars(req, res)
+    return message
+})
+
+router.get('/getFileInfo', [
+    query('user_id').trim().escape().isInt().withMessage("user_id should be a number"),
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        message = error[0].msg
+        return message
+    }
+    const message = await getFileInfoController(req, res)
     return message
 })
 

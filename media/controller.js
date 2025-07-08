@@ -3,6 +3,7 @@ const sharp = require('sharp')
 const upload = require('../middlewares/fileChecker');
 const pool = require('../config/db');
 const axios = require('axios');
+const { getFileInfo } = require('./service');
 
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -174,18 +175,11 @@ const postMedia = async (req, _) => {
 };
 
 
-const getFileInfo = async (req, res) => {
+const getFileInfoController = async (req, res) => {
     const { user_id, id } = req.query;
     try {
-        if (!id) {
-            message = "query is empty"
-            return message;
-        }
-        const query = `select * from files where user_id = $1 and id = $2`;
-        const result = await pool.query(query, [user_id, id]);
-        // console.log(result.rows)
-        images = result.rows
-        return res.status(200).json({ message: images })
+        const result = await getFileInfo(user_id, id)
+        return res.status(200).json({ message: result })
     } catch (err) {
         message = err.message
         console.error(err);
@@ -440,4 +434,4 @@ const getStars = async (req, res) => {
     }
 }
 
-module.exports = { postMedia, getFileInfo, deleteMedia, getVideos, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars };
+module.exports = { postMedia, getFileInfoController, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars };
