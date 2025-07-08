@@ -3,7 +3,7 @@ const sharp = require('sharp')
 const upload = require('../middlewares/fileChecker');
 const pool = require('../config/db');
 const axios = require('axios');
-const { getFileInfo } = require('./service');
+const { getFileInfo, deleteMediaFn, uploadFileFn } = require('./service');
 
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -17,7 +17,7 @@ const s3 = new aws.S3({
 
 let message = '';
 
-const postMedia = async (req, _) => {
+const postMedia = async (req, res) => {
     return new Promise((res, rej) => {
         upload.array('file')(req, res, async (err) => {
             if (err) {
@@ -47,124 +47,9 @@ const postMedia = async (req, _) => {
                 }
 
                 for (const file of files) {
-                    const fileName = file.originalname;
-                    const mediaFolderKey = `${username}/${fileName}/`;
-                    const fileKey = `${mediaFolderKey}${fileName}`;
-
-                    await s3.putObject({
-                        Bucket: process.env.S3_BUCKET_NAME,
-                        Key: mediaFolderKey,
-                    }).promise();
-
-                    if (file.mimetype.startsWith('video/')) {
-
-                        if (file.size > 40 * 1024 * 1024) {
-                            message = "video file too big"
-                            return res(message)
-                        }
-
-                        const params = {
-                            Bucket: process.env.S3_BUCKET_NAME,
-                            Key: fileKey,
-                            ContentType: file.mimetype,
-                            Expires: 60
-                        };
-
-                        const signedUrl = s3.getSignedUrl('putObject', params);
-
-                        await axios.put(signedUrl, file.buffer, {
-                            headers: {
-                                'Content-Type': file.mimetype
-                            }
-                        });
-
-                        const videoUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
-
-                        const query = `insert into files (file_name, file_url, size, user_id, file_type) values ($1, $2, $3, $4, $5)`
-                        await pool.query(query, [fileName, videoUrl, file.size, 3, 'video'])
-
-                    } else if (file.mimetype.startsWith('image/')) {
-                        const originalImage = file.buffer;
-
-                        if (file.size > 20 * 1024 * 1024) {
-                            message = "image too big"
-                            return res(message)
-                        }
-
-                        const uploadImage = {
-                            Bucket: process.env.S3_BUCKET_NAME,
-                            Key: fileKey,
-                            Expires: 60,
-                            ContentType: file.mimetype
-                        }
-
-                        const originalUpload = s3.getSignedUrl('putObject', uploadImage);
-
-                        await axios.put(originalUpload, originalImage, {
-                            headers: {
-                                'Content-Type': file.mimetype
-                            }
-                        })
-
-                        const imageUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
-
-                        const query = `insert into files (file_name, file_url, size, user_id, file_type) values ($1, $2, $3, $4, $5)`
-                        await pool.query(query, [fileName, imageUrl, file.size, 3, 'image']);
-
-                    } else if (file.mimetype.startsWith('application/')) {
-                        const fileo = file.buffer;
-                        // console.log(file)
-                        if (file.size > 20 * 1024 * 1024) {
-                            const message = "file tooooooo bigg"
-                            return res(message)
-                        }
-                        const params = {
-                            Bucket: process.env.S3_BUCKET_NAME,
-                            Key: fileKey,
-                            Expires: 60,
-                            ContentType: file.mimetype
-                        }
-
-                        const pdf = s3.getSignedUrl('putObject', params);
-
-                        await axios.put(pdf, fileo, {
-                            headers: {
-                                'Content-Type': file.mimetype
-                            }
-                        })
-                        const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-                        const query = `insert into files (file_name, file_url, size, user_id, file_type) values ($1, $2, $3, $4, $5)`
-                        await pool.query(query, [fileName, url, file.size, 3, 'document'])
-                    } else {
-                        const fileo = file.buffer;
-
-                        if (file.size > 10 * 1024 * 1024) {
-                            message = "audio file too big"
-                            return res(message)
-                        }
-
-                        const params = {
-                            Bucket: process.env.S3_BUCKET_NAME,
-                            Key: fileKey,
-                            Expires: 60,
-                            ContentType: file.mimetype
-                        }
-
-                        const music = s3.getSignedUrl('putObject', params);
-
-                        await axios.put(music, fileo, {
-                            headers: {
-                                'Content-Type': file.mimetype
-                            }
-                        })
-
-                        const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`
-                        const query = `insert into files (user_id, file_name, file_url, size, file_type) values ($1, $2, $3, $4, $5)`;
-                        await pool.query(query, [3, fileName, url, file.size, 'audio'])
-
-                    }
+                    await uploadFileFn(file, username, 3, message)
                 }
-                message = "Files uploaded successfully!"
+                
                 return res.status(201).json({ message: message })
             } catch (err) {
                 console.error(err);
@@ -191,38 +76,7 @@ const getFileInfoController = async (req, res) => {
 const deleteMedia = async (req, _) => {
     const { username, files, id } = req.query;
     try {
-        for (const fileName of files) {
-            const filePath = `${username}/${fileName}/`;
-
-            const listParams = {
-                Bucket: process.env.S3_BUCKET_NAME,
-                Prefix: filePath
-            }
-
-            const listedObjects = await s3.listObjectsV2(listParams).promise();
-
-            if (!listedObjects.Contents.length) {
-                message = "Folder not found or already deleted"
-                return message;
-            }
-
-            const deleteParam = {
-                Bucket: process.env.S3_BUCKET_NAME,
-                Delete: {
-                    Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
-                }
-            }
-
-            await s3.deleteObjects(deleteParam).promise();
-
-            const query = `delete from files where file_name = $1 and user_id = $2`;
-            pool.query(query, [fileName, id]);
-        }
-        if (files.length > 1) {
-            message = "files deleted successfully !"
-        } else {
-            message = "file deleted successfully !"
-        }
+        const message = await deleteMediaFn(username, files, id)
         return res.status(200).json({ message: message })
     } catch (err) {
         console.error(err);
