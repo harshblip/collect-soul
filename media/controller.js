@@ -1,19 +1,6 @@
-const aws = require('aws-sdk');
-const sharp = require('sharp')
 const upload = require('../middlewares/fileChecker');
-const pool = require('../config/db');
-const axios = require('axios');
-const { getFileInfo, deleteMediaFn, uploadFileFn } = require('./service');
-
-aws.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
-});
-
-const s3 = new aws.S3({
-    signatureVersion: 'v4'
-});
+const { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn } = require('./service');
+const { pool, s3 } = require('../config/db')
 
 let message = '';
 
@@ -49,11 +36,11 @@ const postMedia = async (req, res) => {
                 for (const file of files) {
                     await uploadFileFn(file, username, 3, message)
                 }
-                
-                return res.status(201).json({ message: message })
+
+                return { message: message }
             } catch (err) {
                 console.error(err);
-                return res.status(500).json({ message: err.message })
+                return { message: err.message }
             }
         });
     })
@@ -84,65 +71,11 @@ const deleteMedia = async (req, _) => {
     }
 }
 
-const renameMedia = async (req, _) => {
-    const { username, oldFileName, newFileName, user_id, type } = req.body;
+const renameMedia = async (req, res) => {
+    const { username, oldFileName, newFileName, user_id } = req.body;
     console.log(username, oldFileName, newFileName)
-    const oldPrefix = `${username}/${oldFileName}/`
-    const newPrefix = `${username}/${newFileName}/`
-
     try {
-        const bucketName = process.env.S3_BUCKET_NAME
-
-        // list all objects of the folder
-        const listedObjects = await s3.listObjectsV2({
-            Bucket: bucketName,
-            Prefix: oldPrefix
-        }).promise()
-
-        if (!listedObjects.Contents.length) {
-            message = "No files found under the old folder name."
-            return res.status(404).json({ message: message })
-        }
-
-        let urls = []
-
-        // copy the objects and replace the name
-        const copyPromise = listedObjects.Contents.map(async (x) => {
-            const oldKey = x.Key;
-
-            const suffix = oldKey.substring(oldPrefix.length); // like: oldFileName, oldFileName_display.webp
-            const updatedSuffix = suffix.replace(oldFileName, newFileName); // updated file name
-            const newKey = `${newPrefix}${updatedSuffix}`;
-
-            const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey.replace(/ /g, '+')}`;
-            // console.log(newKey, fileUrl)
-
-            urls.push(fileUrl)
-
-            return s3.copyObject({
-                Bucket: bucketName,
-                CopySource: `${bucketName}/${oldKey}`,
-                Key: newKey
-            }).promise()
-        })
-
-        await Promise.all(copyPromise);
-
-        // console.log(urls[1]);
-
-        const query = `update files set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
-        await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
-        // delete objects
-        const deleteParams = {
-            Bucket: bucketName,
-            Delete: {
-                Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
-            }
-        }
-
-        await s3.deleteObjects(deleteParams).promise()
-
-        message = "files renamed!"
+        const message = await renameMediaFn(username, oldFileName, newFileName, user_id)
         return res.status(201).json({ message: message })
     } catch (err) {
         console.log("error in renameMedia: ", err);
@@ -186,11 +119,9 @@ const getImageByFolder = (req, res) => {
 const getAllFiles = async (req, res) => {
     const { user_id } = req.query
     try {
-        const query = `
-        SELECT * FROM files 
+        const query = `SELECT * FROM files 
         WHERE user_id = $1 
         ORDER BY f.created_at DESC;`
-
         const result = await pool.query(query, [user_id])
         rows = result.rows
         return res.status(200).json({ message: rows })
@@ -216,18 +147,8 @@ const trashMedia = async (req, res) => {
     const client = await pool.connect();
 
     try {
-        await client.query('BEGIN')
-        for (const file of files) {
-            const { fileName, url, size, type, fileId, id } = file
-            console.log(fileName, url, size, type, fileId)
-            const query1 = `update files set is_trashed = $1 where id = $2`
-            await client.query(query1, [true, fileId])
-
-            const query2 = `insert into trash (file_name, file_url, size, user_id, file_type, file_id) values ($1, $2, $3, $4, $5, $6)`
-            await client.query(query2, [fileName, url, size, id, type, fileId])
-        }
-        await client.query('COMMIT')
-        res.status(200).json({ message: "media trashed" })
+        const message = await trashMediaFn(files)
+        res.status(200).json({ message: message })
     } catch (err) {
         await client.query('ROLLBACK')
         console.error(err);
@@ -242,18 +163,8 @@ const recoverMedia = async (req, res) => {
     const client = await pool.connect();
 
     try {
-        await client.query('BEGIN')
-        for (const file of files) {
-            const { fileId, id } = file
-            // console.log(fileName, url, size, fileId)
-            const query1 = `update files set is_trashed = $1 where id = $2`
-            await client.query(query1, [false, fileId])
-
-            const query2 = `delete from trash where id = $1`
-            await client.query(query2, [id])
-        }
-        await client.query('COMMIT')
-        res.status(200).json({ message: "media recovered" })
+        const message = await recoverMediaFn(files)
+        res.status(200).json({ message: message })
     } catch (err) {
         await client.query('ROLLBACK')
         console.error(err);

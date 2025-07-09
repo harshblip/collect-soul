@@ -48,8 +48,8 @@ router.delete('/deleteMedia', auth, [
     return message
 })
 
-router.put('/rename', auth, [
-    query('newFileName').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("filename should be in text format")
+router.put('/rename', [
+    body('newFileName').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("filename should be in text format")
 ], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();

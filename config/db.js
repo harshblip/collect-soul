@@ -19,4 +19,4 @@ const s3 = new aws.S3({
     signatureVersion: 'v4'
 });
 
-module.exports = pool ;
+module.exports = { pool, s3 };

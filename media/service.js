@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const { pool, s3 } = require('../config/db')
 const { uploadBufferToS3, createS3Folder } = require('./utils/s3uploader');
 const { isValidFileSize } = require('./utils/validator');
 
@@ -87,4 +87,101 @@ const uploadFileFn = async (file, username, userId, message) => {
 
 }
 
-module.exports = { getFileInfo, deleteMediaFn, uploadFileFn }
+const renameMediaFn = async (username, oldFileName, newFileName, user_id) => {
+    const oldPrefix = `${username}/${oldFileName}/`
+    const newPrefix = `${username}/${newFileName}/`
+
+    try {
+        const bucketName = process.env.S3_BUCKET_NAME
+
+        // list all objects of the folder
+        const listedObjects = await s3.listObjectsV2({
+            Bucket: bucketName,
+            Prefix: oldPrefix
+        }).promise()
+
+        if (!listedObjects.Contents.length) {
+            message = "No files found under the old folder name."
+            return message
+        }
+
+        let urls = []
+
+        // copy the objects and replace the name
+        const copyPromise = listedObjects.Contents.map(async (x) => {
+            const oldKey = x.Key;
+
+            const suffix = oldKey.substring(oldPrefix.length); // like: oldFileName, oldFileName_display.webp
+            const updatedSuffix = suffix.replace(oldFileName, newFileName); // updated file name
+            const newKey = `${newPrefix}${updatedSuffix}`;
+
+            const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey.replace(/ /g, '+')}`;
+            // console.log(newKey, fileUrl)
+
+            urls.push(fileUrl)
+
+            return s3.copyObject({
+                Bucket: bucketName,
+                CopySource: `${bucketName}/${oldKey}`,
+                Key: newKey
+            }).promise()
+        })
+
+        await Promise.all(copyPromise);
+
+        // console.log(urls[1]);
+
+        const query = `update files set file_name = $1, file_url = $2 where user_id = $3 AND file_name = $4`
+        await pool.query(query, [newFileName, urls[1], user_id, oldFileName])
+        // delete objects
+        const deleteParams = {
+            Bucket: bucketName,
+            Delete: {
+                Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
+            }
+        }
+
+        await s3.deleteObjects(deleteParams).promise()
+
+        message = "files renamed!"
+        return message
+    } catch (err) {
+        console.log("error in renameMedia: ", err);
+        console.error(err);
+        return err.message
+    }
+}
+
+const recoverMediaFn = async (files) => {
+    const client = await pool.connect();
+    await client.query('BEGIN')
+    for (const file of files) {
+        const { fileId, id } = file
+        // console.log(fileName, url, size, fileId)
+        const query1 = `update files set is_trashed = $1 where id = $2`
+        await client.query(query1, [false, fileId])
+
+        const query2 = `delete from trash where id = $1`
+        await client.query(query2, [id])
+    }
+    await client.query('COMMIT')
+    return message = "media recovered"
+}
+
+const trashMediaFn = async (files) => {
+    const client = await pool.connect();
+    await client.query('BEGIN')
+    for (const file of files) {
+        const { fileName, url, size, type, fileId, id } = file
+        console.log(fileName, url, size, type, fileId)
+        const query1 = `update files set is_trashed = $1 where id = $2`
+        await client.query(query1, [true, fileId])
+
+        const query2 = `insert into trash (file_name, file_url, size, user_id, file_type, file_id) values ($1, $2, $3, $4, $5, $6)`
+        await client.query(query2, [fileName, url, size, id, type, fileId])
+    }
+    await client.query('COMMIT')
+    return message = "media trashed"
+}
+
+module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn }
