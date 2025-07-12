@@ -86,10 +86,10 @@ const renameMedia = async (req, res) => {
 }
 
 const createFolder = async (req, _) => {
-    const { id, name, description, is_locked } = req.body;
+    const { id, name, description, is_locked, password } = req.body;
     try {
-        const query = `insert into folders (user_id, name, description, is_locked) values ($1, $2, $3, $4)`
-        await pool.query(query, [id, name, description, is_locked])
+        const query = `insert into folders (user_id, name, description, is_locked, password) values ($1, $2, $3, $4, $5)`
+        await pool.query(query, [id, name, description, is_locked, password])
         message = "new folder created"
         return res.status(201).json({ message: message })
     } catch (err) {
@@ -120,8 +120,8 @@ const getAllFiles = async (req, res) => {
     const { user_id } = req.query
     try {
         const query = `SELECT * FROM files 
-        WHERE user_id = $1 
-        ORDER BY f.created_at DESC;`
+        LEFT JOIN folders ON files.user_id = folders.user_id
+        WHERE files.user_id = $1;`
         const result = await pool.query(query, [user_id])
         rows = result.rows
         return res.status(200).json({ message: rows })
