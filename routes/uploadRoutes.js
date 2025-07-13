@@ -83,7 +83,7 @@ router.get('/getFolders', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        message = error[0].msg
+        const message = error[0].msg
         return message
     }
     const message = await getFolders(req, res)
@@ -91,13 +91,13 @@ router.get('/getFolders', [
 })
 
 router.get('/getAllFiles', [
-    query('email').trim().escape().isEmail().withMessage("email is not valid")
+    query('user_id').trim().escape().isInt().withMessage("user_id should be a number")
 ], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const error = errors.array();
-        message = error[0].msg
-        return message
+    const error = validationResult(req);
+    const errors = error.array();
+    console.log(errors)
+    if (!error.isEmpty()) {
+        return res.status(400).json({ message: errors[0].msg })
     }
     const message = await getAllFiles(req, res);
     return message
@@ -114,7 +114,7 @@ router.get('/folderItems', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        message = error[0].msg
+        const message = error[0].msg
         return message
     }
     const message = await folderItems(req, res)
@@ -141,7 +141,7 @@ router.get('/getStars', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        message = error[0].msg
+        const message = error[0].msg
         return message
     }
     const message = await getStars(req, res)
@@ -154,7 +154,7 @@ router.get('/getFileInfo', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        message = error[0].msg
+        const message = error[0].msg
         return message
     }
     const message = await getFileInfoController(req, res)

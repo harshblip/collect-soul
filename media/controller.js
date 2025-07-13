@@ -116,12 +116,39 @@ const getImageByFolder = (req, res) => {
 
 }
 
+/*
+    id, file_name, size, type, starred, created_at
+*/
+
 const getAllFiles = async (req, res) => {
     const { user_id } = req.query
     try {
-        const query = `SELECT * FROM files 
-        LEFT JOIN folders ON files.user_id = folders.user_id
-        WHERE files.user_id = $1;`
+        const query = `
+        SELECT 
+            id,
+            user_id,
+            file_name,
+            file_type,
+            file_url,
+            created_at,
+            starred,
+            size
+        FROM files
+        WHERE user_id = $1
+        UNION ALL
+        SELECT 
+            id,
+            user_id,
+            file_name,
+            null as file_url,
+            'folder' AS file_type,
+            created_at,
+            starred,
+            size
+        FROM folders
+        WHERE user_id = $1
+        ORDER BY created_at DESC;
+        `
         const result = await pool.query(query, [user_id])
         rows = result.rows
         return res.status(200).json({ message: rows })
