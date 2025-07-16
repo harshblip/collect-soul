@@ -49,7 +49,7 @@ router.delete('/deleteMedia', auth, [
 })
 
 router.put('/rename', [
-    body('newFileName').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("filename should be in text format")
+    body('newFileName').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("filename should be in text format")
 ], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();
@@ -63,9 +63,22 @@ router.put('/rename', [
 })
 
 router.post('/createFolder', [
-    body('name').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder name should be in text format"),
-    body('description').trim().escape().matches(/^[a-zA-Z0-9_.-]+$/).withMessage("folder description should be in text format"),
+    body('name').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("folder name should be in text format"),
+    body('description').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("folder description should be in text format"),
     body('id').trim().escape().isInt().withMessage("id should be a number")
+], async (req, res) => {
+    const error = validationResult(req);
+    const errors = error.array();
+    console.log(errors)
+    if (!error.isEmpty()) {
+        return res.status(400).json({ message: errors[0].msg })
+    }
+    const message = await createFolder(req, res);
+    return message
+})
+
+router.post('/addFilestoFolder', [
+    body('folderId').trim().escape().isInt().withMessage("id should be a number")
 ], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();

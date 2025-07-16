@@ -184,4 +184,12 @@ const trashMediaFn = async (files) => {
     return message = "media trashed"
 }
 
-module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn }
+const addFilestoFolder = async (files, folderId) => {
+    for (const file of files) {
+        const query = `update files set folder_id = $1 where id = $2`
+        await pool.query(query, [folderId, file.id])
+    }
+    return message = `${files.size} files added to folder`
+}
+
+module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolder }
