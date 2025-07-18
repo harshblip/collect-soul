@@ -1,5 +1,5 @@
 const upload = require('../middlewares/fileChecker');
-const { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn } = require('./service');
+const { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn } = require('./service');
 const { pool, s3 } = require('../config/db')
 
 let message = '';
@@ -60,7 +60,7 @@ const getFileInfoController = async (req, res) => {
 
 }
 
-const deleteMedia = async (req, _) => {
+const deleteMedia = async (req, res) => {
     const { username, files, id } = req.query;
     try {
         const message = await deleteMediaFn(username, files, id)
@@ -98,7 +98,7 @@ const createFolder = async (req, res) => {
     }
 }
 
-const getFolders = async (req, _) => {
+const getFolders = async (req, res) => {
     const { id } = req.query
     try {
         const query = `select * from folders where user_id = $1`
@@ -117,8 +117,9 @@ const getImageByFolder = (req, res) => {
 }
 
 const addFilestoFolder = async (req, res) => {
+    const { files, folderId } = req.body
     try {
-        const message = await addFilestoFolder(req, res)
+        const message = await addFilestoFolderFn(files, folderId)
         return res.status(201).json({ message: message })
     } catch (err) {
         console.error(err);
@@ -140,7 +141,7 @@ const getAllFiles = async (req, res) => {
             starred,
             size
         FROM files
-        WHERE user_id = $1
+        WHERE user_id = $1 and folder_id is null
         UNION ALL
         SELECT 
             id,
@@ -167,7 +168,8 @@ const getAllFiles = async (req, res) => {
 const folderItems = async (req, res) => {
     const { userId, folderId } = req.query
     try {
-        const query = `SELECT * FROM files WHERE folder_id = $1 AND user_id = $2;`
+        console.log(userId, folderId)
+        const query = `SELECT * FROM files WHERE folder_id = $2 AND user_id = $1;`
         const result = await pool.query(query, [userId, folderId])
         res.status(200).json({ message: result.rows })
     } catch (err) {
@@ -232,4 +234,4 @@ const getStars = async (req, res) => {
     }
 }
 
-module.exports = { postMedia, getFileInfoController, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars };
+module.exports = { postMedia, getFileInfoController, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, addFilestoFolder };

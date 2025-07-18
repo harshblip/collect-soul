@@ -6,6 +6,7 @@ const { body, query, validationResult } = require('express-validator')
 
 const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, getFileInfoController } = require('../media/controller');
 const limiter = require('../middlewares/rateLimiter');
+const { addFilestoFolder } = require('../media/controller');
 
 router.get('/getImages', auth, [
     query('id').trim().escape().isNumeric().withMessage("id should be a number")
@@ -78,7 +79,7 @@ router.post('/createFolder', [
 })
 
 router.post('/addFilestoFolder', [
-    body('folderId').trim().escape().isInt().withMessage("id should be a number")
+    body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
 ], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();
@@ -86,7 +87,7 @@ router.post('/addFilestoFolder', [
     if (!error.isEmpty()) {
         return res.status(400).json({ message: errors[0].msg })
     }
-    const message = await createFolder(req, res);
+    const message = await addFilestoFolder(req, res);
     return message
 })
 
