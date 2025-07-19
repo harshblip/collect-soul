@@ -137,6 +137,9 @@ const getAllFiles = async (req, res) => {
             file_name,
             file_type,
             file_url,
+            false as is_locked,
+            '' as password,
+            0 as parent_id,
             created_at,
             starred,
             size
@@ -149,11 +152,14 @@ const getAllFiles = async (req, res) => {
             file_name,
             null as file_url,
             'folder' AS file_type,
+            is_locked,
+            password,
+            parent_id,
             created_at,
             starred,
             size
         FROM folders
-        WHERE user_id = $1
+        WHERE user_id = $1 and parent_id is null
         ORDER BY created_at DESC;
         `
         const result = await pool.query(query, [user_id])
@@ -169,7 +175,35 @@ const folderItems = async (req, res) => {
     const { userId, folderId } = req.query
     try {
         console.log(userId, folderId)
-        const query = `SELECT * FROM files WHERE folder_id = $2 AND user_id = $1;`
+        const query = `SELECT 
+            id,
+            user_id,
+            file_name,
+            file_type,
+            file_url,
+            false as is_locked,
+            '' as password,
+            0 as parent_id,
+            created_at,
+            starred,
+            size
+        FROM files
+        WHERE user_id = $1 and folder_id = $2
+        UNION ALL
+        SELECT 
+            id,
+            user_id,
+            file_name,
+            null as file_url,
+            'folder' AS file_type,
+            is_locked,
+            password,
+            parent_id,
+            created_at,
+            starred,
+            size
+        FROM folders
+        WHERE user_id = $1 and parent_id = $2`
         const result = await pool.query(query, [userId, folderId])
         res.status(200).json({ message: result.rows })
     } catch (err) {
