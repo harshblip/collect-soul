@@ -17,10 +17,10 @@ const getFileInfo = async (user_id, id) => {
     console.log(path)
     
     const fileInfo = {
-        images: images,
+        image: images,
         filePath: path
     }
-    
+
     return fileInfo
 }
 

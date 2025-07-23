@@ -105,7 +105,8 @@ router.get('/getFolders', [
 })
 
 router.get('/getAllFiles', [
-    query('user_id').trim().escape().isInt().withMessage("user_id should be a number")
+    query('user_id').trim().escape().isInt().withMessage("user_id should be a number"),
+    query('page').trim().escape().isInt().withMessage("page should be a number")
 ], async (req, res) => {
     const error = validationResult(req);
     const errors = error.array();

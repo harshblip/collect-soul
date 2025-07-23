@@ -128,7 +128,9 @@ const addFilestoFolder = async (req, res) => {
 }
 
 const getAllFiles = async (req, res) => {
-    const { user_id } = req.query
+    const { user_id, page } = req.query
+    const limit = 10
+    const offset = (page - 1) * limit
     try {
         const query = `
         SELECT 
@@ -160,9 +162,10 @@ const getAllFiles = async (req, res) => {
             size
         FROM folders
         WHERE user_id = $1 and parent_id is null
-        ORDER BY created_at DESC;
+        ORDER BY created_at DESC
+        LIMIT $2 OFFSET $3;
         `
-        const result = await pool.query(query, [user_id])
+        const result = await pool.query(query, [user_id, limit, offset])
         rows = result.rows
         return res.status(200).json({ message: rows })
     } catch (err) {
