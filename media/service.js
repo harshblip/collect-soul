@@ -1,4 +1,5 @@
-const { pool, s3 } = require('../config/db')
+const { pool, s3 } = require('../config/db');
+const { findFolder } = require('./utils/nestedFolders');
 const { uploadBufferToS3, createS3Folder } = require('./utils/s3uploader');
 const { isValidFileSize } = require('./utils/validator');
 
@@ -9,9 +10,18 @@ const getFileInfo = async (user_id, id) => {
     }
     const query = `select * from files where user_id = $1 and id = $2`;
     const result = await pool.query(query, [user_id, id]);
-    // console.log(result.rows)
     const images = result.rows
-    return images
+
+    let path = []
+    await findFolder(images[0].folder_id, path)
+    console.log(path)
+    
+    const fileInfo = {
+        images: images,
+        filePath: path
+    }
+    
+    return fileInfo
 }
 
 const deleteMediaFn = async (username, files, id) => {
