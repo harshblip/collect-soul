@@ -1,4 +1,4 @@
-const pool = require('../config/db')
+const { pool } = require('../config/db')
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 
@@ -70,7 +70,7 @@ const loginUser = async (req, res) => {
                     httpOnly: true,
                     // secure: true,    
                     sameSite: 'Strict',
-                    maxAge: checked === true ? 7 * 24 * 60 * 60 * 1000 : 24 * 60  * 60 * 1000
+                    maxAge: checked === true ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000
                 })
 
                 return res.status(200).json({ message: "user logged in successfully", access_token })
