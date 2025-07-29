@@ -14,6 +14,17 @@ const getUsers = async (email) => {
     }
 }
 
+const getUserData = async (req, res) => {
+    const { id } = req.query
+    try {
+        const query = `select * from users where id = $1`
+        const result = await pool.query(query, [id])
+        res.status(200).json({ message: result.rows[0] })
+    } catch (err) {
+        console.log(err)
+    }
+}
+
 const createUsers = async (req, res) => {
     const { username, email, password } = req.body;
     try {
@@ -178,4 +189,4 @@ const updatePassword = async (req, res) => {
     }
 }
 
-module.exports = { getUsers, createUsers, loginUser, deleteUser, updateUser, logoutUser, updatePassword }
+module.exports = { getUserData, createUsers, loginUser, deleteUser, updateUser, logoutUser, updatePassword }
