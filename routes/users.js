@@ -13,7 +13,7 @@ router.post('/signup', limiter, [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        message = error[0].msg
+        const message = error[0].msg
         return message
     }
     const message = await createUsers(req, res);
@@ -27,7 +27,7 @@ router.delete('/delete', auth, [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        message = error[0].msg
+        const message = error[0].msg
         return message
     }
     const message = await deleteUser(req, res);
@@ -42,7 +42,7 @@ router.patch('/update', [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
-        message = error[0].msg
+        const message = error[0].msg
         return message
     }
     const message = await updateUser(req, res);
