@@ -145,13 +145,13 @@ const deleteUser = async (req, res) => {
 }
 
 const updateUser = async (req, res) => {
-    const { username, email, password, id } = req.body;
+    const { username, email, id } = req.body;
     try {
-        if (!username || !email || !password || !id) {
+        if (!username || !email || !id) {
             return res.status(404).json({ message: "please send all of the parameters" })
         }
-        const query = `update users set username = $1, email = $2, password_hash = $3 where id = $4`;
-        const check = await pool.query(query, [username, email, password, id]);
+        const query = `update users set username = $1, email = $2 where id = $3`;
+        const check = await pool.query(query, [username, email, id]);
         console.log("check", check);
         if (check.rowCount === 1) {
             return res.status(200).json({ message: "account successfully updated" })

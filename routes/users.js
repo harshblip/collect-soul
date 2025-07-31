@@ -34,7 +34,8 @@ router.delete('/delete', auth, [
     return message
 })
 
-router.patch('/update', auth, limiter, [
+router.patch('/update', [
+    body('username').trim().escape().isAlpha().isLength({ min: 6 }).withMessage("username must be atleast 6 characters long"),
     body('email').trim().escape().isEmail().withMessage("email is not valid"),
     body('id').trim().escape().isNumeric().withMessage("id must be a number")
 ], async (req, res) => {
