@@ -129,39 +129,50 @@ const addFilestoFolder = async (req, res) => {
 
 const getAllFiles = async (req, res) => {
     const { user_id, page } = req.query
-    const limit = 10
+    const limit = 15
     const offset = (page - 1) * limit
     try {
         const query = `
-        SELECT 
-            id,
-            user_id,
-            file_name,
-            file_type,
-            file_url,
-            false as is_locked,
-            '' as password,
-            0 as parent_id,
-            created_at,
-            starred,
-            size
-        FROM files
-        WHERE user_id = $1 and folder_id is null
-        UNION ALL
-        SELECT 
-            id,
-            user_id,
-            file_name,
-            null as file_url,
-            'folder' AS file_type,
-            is_locked,
-            password,
-            parent_id,
-            created_at,
-            starred,
-            size
+        WITH combined AS (
+            SELECT 
+                id,
+                user_id,
+                file_name,
+                file_type,
+                file_url,
+                false as is_locked,
+                '' as password,
+                0 as parent_id,
+                created_at,
+                starred,
+                size
+            FROM files
+            WHERE user_id = $1 AND folder_id IS NULL
+
+            UNION ALL
+
+            SELECT 
+                id,
+                user_id,
+                file_name,
+                null as file_url,
+                'folder' AS file_type,
+                is_locked,
+                password,
+                parent_id,
+                created_at,
+                starred,
+                size
         FROM folders
-        WHERE user_id = $1 and parent_id is null
+            WHERE user_id = $1 AND parent_id IS NULL
+        ),
+        total_count AS (
+            SELECT COUNT(*) as total FROM combined
+        )
+        SELECT 
+            *,
+            (SELECT total FROM total_count) AS total_count
+        FROM combined
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3;
         `

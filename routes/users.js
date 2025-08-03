@@ -35,7 +35,7 @@ router.delete('/delete', auth, [
 })
 
 router.patch('/update', [
-    body('username').trim().escape().isAlpha().isLength({ min: 6 }).withMessage("username must be atleast 6 characters long"),
+    body('username').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("username should be in text format"),
     body('email').trim().escape().isEmail().withMessage("email is not valid"),
     body('id').trim().escape().isNumeric().withMessage("id must be a number")
 ], async (req, res) => {
