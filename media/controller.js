@@ -10,7 +10,7 @@ const postMedia = async (req, res) => {
             if (err) {
                 console.log("multer validation error: ", err.message);
                 console.error(err);
-                return res.status(500).json({ message: err.message })
+                return { message: err.message }
             }
             try {
                 const username = req.body.username;

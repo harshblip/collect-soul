@@ -69,10 +69,12 @@ const uploadFileFn = async (file, username, userId, message) => {
 
     let type = 'undefined';
     let maxMB = 10;
-
-    if (contentType.startsWith('video/')) {
+    if(contentType.startsWith('audio/')){
+        type = 'audio';
+        maxMB = 20;
+    } else if (contentType.startsWith('video/')) {
         type = 'video';
-        maxMB = 40;
+        maxMB = 100;
     } else if (contentType.startsWith('image/')) {
         type = 'image';
         maxMB = 20;
