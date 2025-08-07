@@ -4,7 +4,7 @@ const auth = require('../middlewares/authMiddleware')
 
 const { body, query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, getFileInfoController } = require('../media/controller');
+const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, getFileInfoController, lockFile, lockFolder, unlockFile, unlockFolder } = require('../media/controller');
 const limiter = require('../middlewares/rateLimiter');
 const { addFilestoFolder } = require('../media/controller');
 
@@ -173,6 +173,64 @@ router.get('/getFileInfo', [
         return message
     }
     const message = await getFileInfoController(req, res)
+    return message
+})
+
+router.post('lockfile', [
+    body('password').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("password should be in text format"),
+    body('fileId').trim().escape().isInt().withMessage("fileId should be a number")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return message
+    }
+
+    const message = await lockFile(req, res)
+    return message
+})
+
+router.post('lockfolder', [
+    body('password').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("password should be in text format"),
+    body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return message
+    }
+
+    const message = await lockFolder(req, res)
+    return message
+})
+
+router.post('unlockfile', [
+    body('fileId').trim().escape().isInt().withMessage("fileId should be a number")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return message
+    }
+
+    const message = await unlockFile(req, res)
+    return message
+})
+
+router.post('unlockfolder', [
+    body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return message
+    }
+
+    const message = await unlockFolder(req, res)
     return message
 })
 
