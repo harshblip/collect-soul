@@ -1,6 +1,7 @@
 const upload = require('../middlewares/fileChecker');
-const { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn } = require('./service');
-const { pool, s3 } = require('../config/db')
+const { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, unlockFolderFn } = require('./service');
+const { pool, s3 } = require('../config/db');
+const { raw } = require('express');
 
 let message = '';
 
@@ -282,4 +283,48 @@ const getStars = async (req, res) => {
     }
 }
 
-module.exports = { postMedia, getFileInfoController, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, addFilestoFolder };
+const lockFile = async (req, res) => {
+    const { password, fileId } = req.body
+
+    try {
+        const message = await lockFilesFn(password, fileId)
+        return res.status(201).json({ message: message })
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+const unlockFile = async (req, res) => {
+    const { fileId } = req.body
+
+    try {
+        const message = await unlockFiles(fileId)
+        return res.status(201).json({ message: message })
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+const lockFolder = async (req, res) => {
+    const { password, folderId } = req.body
+
+    try {
+        const message = await lockFilesFn(password, folderId)
+        return res.status(201).json({ message: message })
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+const unlockFolder = async (req, res) => {
+    const { folderId } = req.body
+
+    try {
+        const message = await unlockFolderFn(folderId)
+        return res.status(201).json({ message: message })
+    } catch (err) {
+        return res.status(500).json({ message: err.messageF })
+    }
+}
+
+module.exports = { postMedia, getFileInfoController, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, addFilestoFolder, lockFile, unlockFile, lockFolder, unlockFolder };

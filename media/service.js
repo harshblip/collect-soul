@@ -15,7 +15,7 @@ const getFileInfo = async (user_id, id) => {
     let path = []
     await findFolder(images[0].folder_id, path)
     console.log(path)
-    
+
     const fileInfo = {
         image: images,
         filePath: path
@@ -69,7 +69,7 @@ const uploadFileFn = async (file, username, userId, message) => {
 
     let type = 'undefined';
     let maxMB = 10;
-    if(contentType.startsWith('audio/')){
+    if (contentType.startsWith('audio/')) {
         type = 'audio';
         maxMB = 20;
     } else if (contentType.startsWith('video/')) {
@@ -205,4 +205,28 @@ const addFilestoFolderFn = async (files, folderId) => {
     return message = `${files.size} files added to folder`
 }
 
-module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn }
+const lockFilesFn = async (password, fileId) => {
+    const query = `update files set is_locked = $1, password = $2 where id = $3`
+    await pool.query(query, [true, password, fileId])
+    return message = `password saved`
+}
+
+const unlockFiles = async(fileId) => {
+    const query = `update files set is_locked = $1, password = $2 where id = $3`
+    await pool.query(query, [false, null, fileId])
+    return message = `file unlocked`
+}
+
+const lockFolderFn = async(password, folderId) => {
+    const query = `update folders set is_locked = $1, password = $2 where id = $3`
+    await pool.query(query, [true, password, fileId])
+    return message = 'password saved'
+}
+
+const unlockFolderFn = async(folderId) => {
+    const query = `update folders set is_locked = $1, password = $2 where id = $3`
+    await pool.query(query, [false, null, folderId])
+    return message = `folder unlocked`
+}
+
+module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, lockFolderFn, unlockFolderFn }
