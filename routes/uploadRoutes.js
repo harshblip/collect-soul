@@ -176,7 +176,7 @@ router.get('/getFileInfo', [
     return message
 })
 
-router.post('lockfile', [
+router.post('/lockfile', [
     body('password').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("password should be in text format"),
     body('fileId').trim().escape().isInt().withMessage("fileId should be a number")
 ], async (req, res) => {
@@ -191,7 +191,7 @@ router.post('lockfile', [
     return message
 })
 
-router.post('lockfolder', [
+router.post('/lockfolder', [
     body('password').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("password should be in text format"),
     body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
 ], async (req, res) => {
@@ -206,7 +206,7 @@ router.post('lockfolder', [
     return message
 })
 
-router.post('unlockfile', [
+router.post('/unlockfile', [
     body('fileId').trim().escape().isInt().withMessage("fileId should be a number")
 ], async (req, res) => {
     const errors = validationResult(req);
@@ -220,7 +220,7 @@ router.post('unlockfile', [
     return message
 })
 
-router.post('unlockfolder', [
+router.post('/unlockfolder', [
     body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
 ], async (req, res) => {
     const errors = validationResult(req);
