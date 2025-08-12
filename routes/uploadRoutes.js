@@ -4,7 +4,7 @@ const auth = require('../middlewares/authMiddleware')
 
 const { body, query, validationResult } = require('express-validator')
 
-const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, getFileInfoController, lockFile, lockFolder, unlockFile, unlockFolder, updateLastSeen, getLastseen, getSuggestions } = require('../media/controller');
+const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, getFileInfoController, lockFile, lockFolder, unlockFile, unlockFolder, updateLastSeen, getLastseen, getSuggestions, getSearchResults } = require('../media/controller');
 const limiter = require('../middlewares/rateLimiter');
 const { addFilestoFolder } = require('../media/controller');
 
@@ -286,6 +286,21 @@ router.get('/getSuggestions', [
     }
 
     const message = await getSuggestions(req, res)
+    return message
+})
+
+router.get('searchResults', [
+    query('userId').trim().escape().isInt().withMessage("userId should be a number"),
+    query('words').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("words should be in text format"),
+], async(req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return message
+    }
+
+    const message = await getSearchResults(req, res)
     return message
 })
 

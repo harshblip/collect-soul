@@ -205,6 +205,7 @@ const addFilestoFolderFn = async (files, folderId) => {
     return message = `${files.size} files added to folder`
 }
 
+// LOCK/UNLOCK
 const lockFilesFn = async (password, fileId) => {
     const query = `update files set is_locked = $1, password = $2 where id = $3`
     await pool.query(query, [true, password, fileId])
@@ -276,21 +277,45 @@ const getStarFilesFn = async (userId) => {
     const query = `select * from files`
 }
 
-const getSuggestionsFn = async (word, userId) => {
+const getSuggestionsFn = async (word, userId, type, starred, locked, date) => {
     const query = `
         SELECT file_name, file_url, is_locked, password, size, id
         FROM files
-        WHERE (
-        length($1) < 3 AND file_name ILIKE $1 || '%' AND user_id = $2
+        WHERE user_id = $2
+        AND (
+            (length($1) < 3 AND file_name ILIKE $1 || '%')
+        OR
+            (length($1) >= 3 AND file_name % $1)
         )
-        OR (
-        length($1) >= 3 AND file_name % $1 AND user_id = $2
-        )
-        ORDER BY similarity(file_name, $1 ) DESC
+        AND ($3::file_type IS NULL OR file_type = $3::file_type)
+        AND ($4::boolean IS NULL OR starred = $4::boolean)
+        AND ($5::boolean IS NULL OR is_locked = $5::boolean)
+        AND ($6::timestamp without time zone IS NULL OR created_at = $6::timestamp without time zone)
+        ORDER BY similarity(file_name, $1) DESC
         LIMIT 6;
     `
-    const result = await pool.query(query, [word, userId])
+    const result = await pool.query(query, [word, userId, type, starred, locked, date])
     return result
 }
 
-module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, lockFolderFn, unlockFolderFn, updateLastSeenFn, getLastOpenedFiles, getSuggestionsFn }
+const getSearchResultsFn = async (word, userId, type, starred, locked, date) => {
+    const query = `
+        SELECT file_name, file_url, is_locked, password, size, id
+        FROM files
+        WHERE user_id = $2
+        AND (
+            (length($1) < 3 AND file_name ILIKE $1 || '%')
+        OR
+            (length($1) >= 3 AND file_name % $1)
+        )
+        AND ($3::file_type IS NULL OR file_type = $3::file_type)
+        AND ($4::boolean IS NULL OR starred = $4::boolean)
+        AND ($5::boolean IS NULL OR is_locked = $5::boolean)
+        AND ($6::timestamp without time zone IS NULL OR created_at = $6::timestamp without time zone)
+        ORDER BY similarity(file_name, $1) DESC
+    `
+    const result = await pool.query(query, [word, userId, type, starred, locked, date])
+    return result
+}
+
+module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, lockFolderFn, unlockFolderFn, updateLastSeenFn, getLastOpenedFiles, getSuggestionsFn, getSearchResultsFn }

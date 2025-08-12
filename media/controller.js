@@ -1,5 +1,5 @@
 const upload = require('../middlewares/fileChecker');
-const { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, unlockFolderFn, updateLastSeenFn, getLastOpenedFiles, getSuggestionsFn } = require('./service');
+const { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, unlockFolderFn, updateLastSeenFn, getLastOpenedFiles, getSuggestionsFn, getSearchResultsFn } = require('./service');
 const { pool, s3 } = require('../config/db');
 const { raw } = require('express');
 
@@ -359,4 +359,14 @@ const getSuggestions = async (req, res) => {
     }
 }
 
-module.exports = { postMedia, getFileInfoController, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, addFilestoFolder, lockFile, unlockFile, lockFolder, unlockFolder, updateLastSeen, getLastseen, getSuggestions};
+const getSearchResults = async(req, res) => {
+    const {words, userId, type, starred, locked, date} = req.query;
+    try {
+        const message = await getSearchResultsFn(words, userId, type, starred, locked, date)
+        return res.status(200).json({message: message.rows})
+    }catch(err){
+       return res.status(500).json({ message: err.message }) 
+    }
+}
+
+module.exports = { postMedia, getFileInfoController, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, addFilestoFolder, lockFile, unlockFile, lockFolder, unlockFolder, updateLastSeen, getLastseen, getSuggestions, getSearchResults};
