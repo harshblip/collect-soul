@@ -211,31 +211,31 @@ const lockFilesFn = async (password, fileId) => {
     return message = `password saved`
 }
 
-const unlockFiles = async(fileId) => {
+const unlockFiles = async (fileId) => {
     const query = `update files set is_locked = $1, password = $2 where id = $3`
     await pool.query(query, [false, null, fileId])
     return message = `file unlocked`
 }
 
-const lockFolderFn = async(password, folderId) => {
+const lockFolderFn = async (password, folderId) => {
     const query = `update folders set is_locked = $1, password = $2 where id = $3`
     await pool.query(query, [true, password, fileId])
     return message = 'password saved'
 }
 
-const unlockFolderFn = async(folderId) => {
+const unlockFolderFn = async (folderId) => {
     const query = `update folders set is_locked = $1, password = $2 where id = $3`
     await pool.query(query, [false, null, folderId])
     return message = `folder unlocked`
 }
 
-const updateLastSeenFn = async(fileId, type) => {
+const updateLastSeenFn = async (fileId, type) => {
     const query = `update ${type} set updated_at = $1 where id = $2`
     await pool.query(query, [new Date(), fileId])
     return message = `updated last seen`
 }
 
-const getLastOpenedFiles = async(userId) => {
+const getLastOpenedFiles = async (userId) => {
     const query = `
         SELECT 
             id,
@@ -272,4 +272,25 @@ const getLastOpenedFiles = async(userId) => {
     return result
 }
 
-module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, lockFolderFn, unlockFolderFn, updateLastSeenFn, getLastOpenedFiles }
+const getStarFilesFn = async (userId) => {
+    const query = `select * from files`
+}
+
+const getSuggestionsFn = async (word, userId) => {
+    const query = `
+        SELECT file_name, file_url, is_locked, password, size, id
+        FROM files
+        WHERE (
+        length($1) < 3 AND file_name ILIKE $1 || '%' AND user_id = $2
+        )
+        OR (
+        length($1) >= 3 AND file_name % $1 AND user_id = $2
+        )
+        ORDER BY similarity(file_name, $1 ) DESC
+        LIMIT 6;
+    `
+    const result = await pool.query(query, [word, userId])
+    return result
+}
+
+module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, lockFolderFn, unlockFolderFn, updateLastSeenFn, getLastOpenedFiles, getSuggestionsFn }
