@@ -1,9 +1,6 @@
-const { pool, s3 } = require('../config/db');
-const { findFolder } = require('./utils/nestedFolders');
-const { uploadBufferToS3, createS3Folder } = require('./utils/s3uploader');
-const { isValidFileSize } = require('./utils/validator');
+const { pool, s3 } = require('../../config/db');
 
-const getFileInfo = async (user_id, id) => {
+export const getFileInfo = async (user_id, id) => {
     if (!id) {
         message = "query is empty"
         return message;
@@ -24,7 +21,7 @@ const getFileInfo = async (user_id, id) => {
     return fileInfo
 }
 
-const deleteMediaFn = async (username, files, id) => {
+export const deleteMediaFn = async (username, files, id) => {
     for (const fileName of files) {
         const filePath = `${username}/${fileName}/`;
 
@@ -57,7 +54,7 @@ const deleteMediaFn = async (username, files, id) => {
     return message
 }
 
-const uploadFileFn = async (file, username, userId, message) => {
+export const uploadFileFn = async (file, username, userId, message) => {
     const fileName = file.originalname;
     const folderKey = `${username}/${fileName}/`;
     const fileKey = `${folderKey}${fileName}`;
@@ -99,7 +96,7 @@ const uploadFileFn = async (file, username, userId, message) => {
 
 }
 
-const renameMediaFn = async (username, oldFileName, newFileName, user_id) => {
+export const renameMediaFn = async (username, oldFileName, newFileName, user_id) => {
     const oldPrefix = `${username}/${oldFileName}/`
     const newPrefix = `${username}/${newFileName}/`
 
@@ -164,7 +161,7 @@ const renameMediaFn = async (username, oldFileName, newFileName, user_id) => {
     }
 }
 
-const recoverMediaFn = async (files) => {
+export const recoverMediaFn = async (files) => {
     const client = await pool.connect();
     await client.query('BEGIN')
     for (const file of files) {
@@ -180,7 +177,7 @@ const recoverMediaFn = async (files) => {
     return message = "media recovered"
 }
 
-const trashMediaFn = async (files) => {
+export const trashMediaFn = async (files) => {
     const client = await pool.connect();
     await client.query('BEGIN')
     for (const file of files) {
@@ -195,127 +192,3 @@ const trashMediaFn = async (files) => {
     await client.query('COMMIT')
     return message = "media trashed"
 }
-
-const addFilestoFolderFn = async (files, folderId) => {
-    console.log(files)
-    for (const file of files) {
-        const query = `update files set folder_id = $1 where id = $2`
-        await pool.query(query, [folderId, file.id])
-    }
-    return message = `${files.size} files added to folder`
-}
-
-// LOCK/UNLOCK
-const lockFilesFn = async (password, fileId) => {
-    const query = `update files set is_locked = $1, password = $2 where id = $3`
-    await pool.query(query, [true, password, fileId])
-    return message = `password saved`
-}
-
-const unlockFiles = async (fileId) => {
-    const query = `update files set is_locked = $1, password = $2 where id = $3`
-    await pool.query(query, [false, null, fileId])
-    return message = `file unlocked`
-}
-
-const lockFolderFn = async (password, folderId) => {
-    const query = `update folders set is_locked = $1, password = $2 where id = $3`
-    await pool.query(query, [true, password, fileId])
-    return message = 'password saved'
-}
-
-const unlockFolderFn = async (folderId) => {
-    const query = `update folders set is_locked = $1, password = $2 where id = $3`
-    await pool.query(query, [false, null, folderId])
-    return message = `folder unlocked`
-}
-
-const updateLastSeenFn = async (fileId, type) => {
-    const query = `update ${type} set updated_at = $1 where id = $2`
-    await pool.query(query, [new Date(), fileId])
-    return message = `updated last seen`
-}
-
-const getLastOpenedFiles = async (userId) => {
-    const query = `
-        SELECT 
-            id,
-            user_id,
-            file_name,
-            file_type,
-            file_url,
-            false as is_locked,
-            '' as password,
-            0 as parent_id,
-            created_at,
-            starred,
-            size
-        FROM files
-        WHERE user_id = $1 and folder_id is null
-        UNION ALL
-        SELECT 
-            id,
-            user_id,
-            file_name,
-            null as file_url,
-            'folder' AS file_type,
-            is_locked,
-            password,
-            parent_id,
-            created_at,
-            starred,
-            size
-        FROM folders
-        WHERE user_id = $1 and parent_id is null
-        ORDER BY updated_at DESC
-    `
-    const result = await query.pool(query, [userId])
-    return result
-}
-
-const getStarFilesFn = async (userId) => {
-    const query = `select * from files`
-}
-
-const getSuggestionsFn = async (word, userId, type, starred, locked, date) => {
-    const query = `
-        SELECT file_name, file_url, is_locked, password, size, id
-        FROM files
-        WHERE user_id = $2
-        AND (
-            (length($1) < 3 AND file_name ILIKE $1 || '%')
-        OR
-            (length($1) >= 3 AND file_name % $1)
-        )
-        AND ($3::file_type IS NULL OR file_type = $3::file_type)
-        AND ($4::boolean IS NULL OR starred = $4::boolean)
-        AND ($5::boolean IS NULL OR is_locked = $5::boolean)
-        AND ($6::timestamp without time zone IS NULL OR created_at = $6::timestamp without time zone)
-        ORDER BY similarity(file_name, $1) DESC
-        LIMIT 6;
-    `
-    const result = await pool.query(query, [word, userId, type, starred, locked, date])
-    return result
-}
-
-const getSearchResultsFn = async (word, userId, type, starred, locked, date) => {
-    const query = `
-        SELECT file_name, file_url, is_locked, password, size, id
-        FROM files
-        WHERE user_id = $2
-        AND (
-            (length($1) < 3 AND file_name ILIKE $1 || '%')
-        OR
-            (length($1) >= 3 AND file_name % $1)
-        )
-        AND ($3::file_type IS NULL OR file_type = $3::file_type)
-        AND ($4::boolean IS NULL OR starred = $4::boolean)
-        AND ($5::boolean IS NULL OR is_locked = $5::boolean)
-        AND ($6::timestamp without time zone IS NULL OR created_at = $6::timestamp without time zone)
-        ORDER BY similarity(file_name, $1) DESC
-    `
-    const result = await pool.query(query, [word, userId, type, starred, locked, date])
-    return result
-}
-
-module.exports = { getFileInfo, deleteMediaFn, uploadFileFn, renameMediaFn, recoverMediaFn, trashMediaFn, addFilestoFolderFn, lockFilesFn, unlockFiles, lockFolderFn, unlockFolderFn, updateLastSeenFn, getLastOpenedFiles, getSuggestionsFn, getSearchResultsFn }
