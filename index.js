@@ -1,14 +1,14 @@
-require('dotenv').config();
+import express from 'express'
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv'
+import cookieParser from 'cookie-parser';
+import cors from 'cors'
+import { limiter } from './middlewares/rateLimiter.js';
+import { trashCleanup } from './jobs/trashCleanup.js';
+import router from './routes/uploadRoutes.js';
+import userRoute from './routes/users.js';
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser')
-const cors = require('cors');
-const uploadRoutes = require('./routes/uploadRoutes')
-const userRoutes = require('./routes/users')
-const limiter = require('./middlewares/rateLimiter')
-const trashCleanup = require('./jobs/trashCleanup')
-
+dotenv.config()
 const app = express();
 const port = 4000;
 
@@ -23,8 +23,8 @@ app.use(bodyParser.urlencoded({
 }))
 app.use(cookieParser());
 
-app.use('/upload', uploadRoutes);
-app.use('/user', userRoutes);
+app.use('/upload', router);
+app.use('/user', userRoute);
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);

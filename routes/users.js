@@ -1,11 +1,11 @@
 const express = require('express');
-const router = express.Router();
+const userRoute = express.Router();
 const { body, query, validationResult } = require('express-validator')
 const { createUsers, loginUser, deleteUser, updateUser, updatePassword, getUserData } = require('../controllers/userController')
 const auth = require('../middlewares/authMiddleware')
 const limiter = require('../middlewares/rateLimiter')
 
-router.post('/signup', limiter, [
+userRoute.post('/signup', limiter, [
     body('username').trim().escape().isAlpha().isLength({ min: 6 }).withMessage("username must be atleast 6 characters long"),
     body('email').trim().escape().isEmail().withMessage("email is not valid"),
     body('password').trim().escape().isLength({ min: 6 }).withMessage("password must atleast be 6 char long")
@@ -20,7 +20,7 @@ router.post('/signup', limiter, [
     return message
 })
 
-router.delete('/delete', auth, [
+userRoute.delete('/delete', auth, [
     query('email').trim().escape().isEmail().withMessage("email is not valid"),
     query('id').trim().escape().isNumeric().withMessage("id must be a number")
 ], async (req, res) => {
@@ -34,7 +34,7 @@ router.delete('/delete', auth, [
     return message
 })
 
-router.patch('/update', [
+userRoute.patch('/update', [
     body('username').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("username should be in text format"),
     body('email').trim().escape().isEmail().withMessage("email is not valid"),
     body('id').trim().escape().isNumeric().withMessage("id must be a number")
@@ -49,7 +49,7 @@ router.patch('/update', [
     return message
 })
 
-router.put('/reset-password', [
+userRoute.put('/reset-password', [
     body('email').trim().escape().isEmail().withMessage("email is not valid"),
     body('password').trim().escape().isLength({ min: 6 }).withMessage("password must atleast be 6 char long")
 ], async (req, res) => {
@@ -63,7 +63,7 @@ router.put('/reset-password', [
     return message
 })
 
-router.get('/login', [
+userRoute.get('/login', [
     query('email').trim().escape().isEmail().withMessage("email is not valid"),
 ], async (req, res) => {
     const errors = validationResult(req);
@@ -76,7 +76,7 @@ router.get('/login', [
     return message
 })
 
-router.get('/getUserData', [
+userRoute.get('/getUserData', [
     query('id').trim().escape().isNumeric().withMessage("id must be a number")
 ], async (req, res) => {
     const errors = validationResult(req)
@@ -89,4 +89,4 @@ router.get('/getUserData', [
     return message;
 })
 
-module.exports = router;
+export default userRoute;

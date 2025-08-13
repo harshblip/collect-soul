@@ -1,4 +1,4 @@
-const multer = require('multer');
+import multer from 'multer';
 
 const validMimeTypes = [
     // Images
@@ -39,12 +39,10 @@ const fileFilter = (req, file, cb) => {
     cb(null, true);
 };
 
-const upload = multer({
+export const upload = multer({
     storage,
     fileFilter,
     limits: {
         fileSize: 100 * 1024 * 1024 // Global upper bound, individual filters above still apply
     }
 });
-
-module.exports = upload;

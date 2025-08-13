@@ -1,12 +1,9 @@
-const express = require('express');
-const router = express.Router();
-const auth = require('../middlewares/authMiddleware')
-
-const { body, query, validationResult } = require('express-validator')
-
-const { postMedia, getImages, getVideos, deleteMedia, renameMedia, createFolder, getFolders, getAllFiles, trashMedia, recoverMedia, folderItems, starFile, getStars, getFileInfoController, lockFile, lockFolder, unlockFile, unlockFolder, updateLastSeen, getLastseen, getSuggestions, getSearchResults } = require('../media/controller');
-const limiter = require('../middlewares/rateLimiter');
-const { addFilestoFolder } = require('../media/controller');
+import express from 'express'
+import { authenticateToken as auth } from '../middlewares/authMiddleware.js';
+import { body, query, validationResult } from 'express-validator';
+import { limiter } from '../middlewares/rateLimiter.js';
+import { addFilestoFolder } from '../media/controllers/folder.controller.js';
+import { getSuggestions } from '../media/controllers/search.controller.js';
 
 router.get('/getImages', auth, [
     query('id').trim().escape().isNumeric().withMessage("id should be a number")
@@ -289,7 +286,7 @@ router.get('/getSuggestions', [
     return message
 })
 
-router.get('searchResults', [
+router.get('/searchResults', [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
     query('words').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("words should be in text format"),
 ], async(req, res) => {
@@ -306,4 +303,4 @@ router.get('searchResults', [
 
 router.post('/', postMedia)
 
-module.exports = router;
+export default router

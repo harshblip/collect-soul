@@ -1,5 +1,7 @@
-const { Pool } = require('pg');
-const aws = require('aws-sdk');
+import pg from 'pg';
+import aws from 'aws-sdk'
+
+const { Pool } = pg
 
 aws.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -7,7 +9,7 @@ aws.config.update({
     region: process.env.AWS_REGION,
 });
 
-const pool = new Pool({
+export const pool = new Pool({
     user: `${process.env.user}`,
     host: 'localhost',
     database: 'collect',
@@ -15,8 +17,6 @@ const pool = new Pool({
     port: `${process.env.port}`
 })
 
-const s3 = new aws.S3({
+export const s3 = new aws.S3({
     signatureVersion: 'v4'
 });
-
-module.exports = { pool, s3 };

@@ -1,3 +1,5 @@
+import { getSuggestionsFn, getSearchResultsFn } from "../services/search.service.js";
+
 export const getSuggestions = async (req, res) => {
     const { words, userId } = req.query;
     try {

@@ -1,5 +1,5 @@
-const upload = require('../../middlewares/fileChecker');
-const { pool, s3 } = require('../../config/db');
+import { upload } from '../../middlewares/fileChecker.js';
+import { pool, s3 } from '../../config/db.js';
 
 export const createFolder = async (req, res) => {
     const { id, name, description, is_locked, password } = req.body;

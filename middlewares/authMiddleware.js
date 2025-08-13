@@ -1,9 +1,9 @@
-const jwt = require('jsonwebtoken')
+import jwt from 'jsonwebtoken';
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 
-const authenticateToken = (req, res, next) => {
+export const authenticateToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     console.log(token)
 
@@ -44,5 +44,3 @@ const authenticateToken = (req, res, next) => {
         }
     })
 }
-
-module.exports = authenticateToken;

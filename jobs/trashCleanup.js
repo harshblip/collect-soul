@@ -1,7 +1,7 @@
-const cron = require('node-cron')
-const { pool } = require('../config/db')
+import cron from 'node-cron'
+import { pool } from '../config/db.js'
 
-const trashCleanup = () => {
+export const trashCleanup = () => {
     // cron.schedule('*/2 * * * *', async () => {
     //     try {
     //         console.log("🧹 Running trash cleanup job...");
@@ -12,5 +12,3 @@ const trashCleanup = () => {
     //     }
     // });
 }
-
-module.exports = trashCleanup;

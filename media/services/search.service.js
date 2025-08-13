@@ -1,4 +1,4 @@
-const { pool, s3 } = require('../../config/db');
+const { pool } = require('../../config/db');
 
 export const getSuggestionsFn = async (word, userId, type, starred, locked, date) => {
     const query = `
