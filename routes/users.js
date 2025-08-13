@@ -1,9 +1,10 @@
-const express = require('express');
+import express from 'express'
+import { body, query, validationResult } from 'express-validator';
+import { createUsers, deleteUser, updateUser, updatePassword } from '../users/controllers/profile.controller.js';
+import { authenticateToken as auth } from '../middlewares/authMiddleware.js'
+import { limiter } from '../middlewares/rateLimiter.js';
+
 const userRoute = express.Router();
-const { body, query, validationResult } = require('express-validator')
-const { createUsers, loginUser, deleteUser, updateUser, updatePassword, getUserData } = require('../controllers/userController')
-const auth = require('../middlewares/authMiddleware')
-const limiter = require('../middlewares/rateLimiter')
 
 userRoute.post('/signup', limiter, [
     body('username').trim().escape().isAlpha().isLength({ min: 6 }).withMessage("username must be atleast 6 characters long"),

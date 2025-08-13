@@ -1,4 +1,4 @@
-const { pool } = require('../../config/db');
+import { pool } from '../../config/db.js';
 
 export const getSuggestionsFn = async (word, userId, type, starred, locked, date) => {
     const query = `

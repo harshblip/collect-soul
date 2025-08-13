@@ -1,6 +1,5 @@
-const upload = require('../../middlewares/fileChecker');
-const { pool, s3 } = require('../../config/db');
-const { raw } = require('express');
+import { upload } from '../../middlewares/fileChecker.js';
+import { pool, s3 } from '../../config/db.js';
 
 export const postMedia = async (req, res) => {
     return new Promise((res, rej) => {

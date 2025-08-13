@@ -4,6 +4,9 @@ import { body, query, validationResult } from 'express-validator';
 import { limiter } from '../middlewares/rateLimiter.js';
 import { addFilestoFolder } from '../media/controllers/folder.controller.js';
 import { getSuggestions } from '../media/controllers/search.controller.js';
+import { trashMedia, recoverMedia, postMedia } from '../media/controllers/media.controller.js'
+
+const router = express.Router()
 
 router.get('/getImages', auth, [
     query('id').trim().escape().isNumeric().withMessage("id should be a number")
@@ -289,7 +292,7 @@ router.get('/getSuggestions', [
 router.get('/searchResults', [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
     query('words').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("words should be in text format"),
-], async(req, res) => {
+], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
