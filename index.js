@@ -5,7 +5,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors'
 import { limiter } from './middlewares/rateLimiter.js';
 import { trashCleanup } from './jobs/trashCleanup.js';
-import router from './routes/uploadRoutes.js';
+import router from './routes/users/index.js';
 import userRoute from './routes/users.js';
 
 dotenv.config()
@@ -24,7 +24,7 @@ app.use(bodyParser.urlencoded({
 app.use(cookieParser());
 
 app.use('/upload', router);
-app.use('/user', userRoute);
+app.use('/user', router);
 
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
