@@ -2,6 +2,8 @@ import jwt from "jsonwebtoken";
 import { pool } from "../../config/db.js";
 import bcrypt from 'bcrypt'
 
+let message = ''
+
 export const getUsers = async (email) => {
     try {
         const query = `select * from users where email = $1`;

@@ -1,7 +1,9 @@
 import express from 'express'
 import { body, query, validationResult } from 'express-validator';
-import { authenticateToken as auth } from "../../middlewares/authMiddleware";
-import { limiter } from "../../middlewares/rateLimiter";
+import { authenticateToken as auth } from "../../middlewares/authMiddleware.js";
+import { limiter } from "../../middlewares/rateLimiter.js";
+import { getUserData } from '../../users/controllers/auth.controller.js';
+import { updateUser, updatePassword } from '../../users/controllers/profile.controller.js';
 
 const profileRoute = express.Router();
 
@@ -31,19 +33,6 @@ profileRoute.put('/reset-password', [
         return res.status(400).json({ message })
     }
     const { message } = await updatePassword(req, res)
-    return message
-})
-
-profileRoute.get('/login', [
-    query('email').trim().escape().isEmail().withMessage("email is not valid"),
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const error = errors.array();
-        const message = error[0].msg
-        return res.status(400).json({ message })
-    }
-    const { message } = await loginUser(req, res);
     return message
 })
 

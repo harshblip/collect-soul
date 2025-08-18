@@ -1,7 +1,9 @@
 import express from 'express'
 import { body, query, validationResult } from 'express-validator';
-import { authenticateToken as auth } from "../../middlewares/authMiddleware";
-import { limiter } from "../../middlewares/rateLimiter";
+import { authenticateToken as auth } from "../../middlewares/authMiddleware.js";
+import { limiter } from '../../middlewares/rateLimiter.js';
+import { loginUser } from '../../users/controllers/auth.controller.js'
+import { createUsers, deleteUser } from '../../users/controllers/profile.controller.js'
 
 const authRoute = express.Router();
 
@@ -17,6 +19,19 @@ authRoute.post('/signup', limiter, [
         return message
     }
     const message = await createUsers(req, res);
+    return message
+})
+
+authRoute.get('/login', [
+    query('email').trim().escape().isEmail().withMessage("email is not valid"),
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return res.status(400).json({ message })
+    }
+    const { message } = await loginUser(req, res);
     return message
 })
 
