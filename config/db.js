@@ -10,11 +10,11 @@ aws.config.update({
 });
 
 export const pool = new Pool({
-    user: `${process.env.user}`,
+    user: `${process.env.USER}`,
     host: 'localhost',
     database: 'collect',
-    password: `${process.env.password}`,
-    port: `${process.env.port}`
+    password: `${process.env.PASSWORD}`,
+    port: `${process.env.PORT}`
 })
 
 export const s3 = new aws.S3({

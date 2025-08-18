@@ -84,10 +84,10 @@
 
 create .env file and set the variables and their values
 ```env
-user = 
-password = 
-database = 
-port = 
+USER = 
+PASSWORD = 
+DATABASE = 
+PORT = 
 
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=

@@ -15,8 +15,6 @@ const port = 4000;
 app.use(cors());
 trashCleanup()
 
-console.log(process.env.USER);
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
