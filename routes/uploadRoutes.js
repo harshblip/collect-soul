@@ -274,6 +274,6 @@ router.get('/getStarFiles', [
     // const message 
 })
 
-router.post('/', postMedia)
+
 
 export default router

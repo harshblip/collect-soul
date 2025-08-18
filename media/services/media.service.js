@@ -1,4 +1,6 @@
-const { pool, s3 } = require('../../config/db');
+import { isValidFileSize, removeFileExtension } from '../utils/validator.js';
+import { pool, s3 } from '../../config/db.js';
+import { createS3Folder, uploadBufferToS3 } from '../utils/s3uploader.js';
 
 export const getFileInfo = async (user_id, id) => {
     if (!id) {
@@ -55,7 +57,8 @@ export const deleteMediaFn = async (username, files, id) => {
 }
 
 export const uploadFileFn = async (file, username, userId, message) => {
-    const fileName = file.originalname;
+    const notfileName = file.originalname;
+    const fileName = removeFileExtension(notfileName)
     const folderKey = `${username}/${fileName}/`;
     const fileKey = `${folderKey}${fileName}`;
     const contentType = file.mimetype;

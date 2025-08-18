@@ -1,9 +1,9 @@
-const AWS = require('aws-sdk');
-const axios = require('axios');
+import aws from 'aws-sdk'
+import axios from 'axios';
 
-const s3 = new AWS.S3();
+const s3 = new aws.S3();
 
-async function uploadBufferToS3(buffer, key, contentType) {
+export async function uploadBufferToS3(buffer, key, contentType) {
     const signedUrl = s3.getSignedUrl('putObject', {
         Bucket: process.env.S3_BUCKET_NAME,
         Key: key,
@@ -18,11 +18,9 @@ async function uploadBufferToS3(buffer, key, contentType) {
     return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 }
 
-function createS3Folder(key) {
+export function createS3Folder(key) {
     return s3.putObject({
         Bucket: process.env.S3_BUCKET_NAME,
         Key: key,
     }).promise();
 }
-
-module.exports = { uploadBufferToS3, createS3Folder };

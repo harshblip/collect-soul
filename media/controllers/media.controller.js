@@ -1,5 +1,8 @@
 import { upload } from '../../middlewares/fileChecker.js';
 import { pool, s3 } from '../../config/db.js';
+import { uploadFileFn } from '../services/media.service.js';
+
+let message = ''
 
 export const postMedia = async (req, res) => {
     return new Promise((res, rej) => {
