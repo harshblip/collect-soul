@@ -12,7 +12,7 @@ export const getUsers = async (email) => {
         console.log("getUsers", ans);
         return ans
     } catch (err) {
-        console.log(err)
+        console.log("errrr-> ", err)
     }
 }
 
@@ -33,7 +33,7 @@ export const loginUser = async (req, res) => {
     console.log("ans", ans, checked);
     try {
         if (ans) {
-            const passwordCheck = await bcrypt.compare(password, ans.password_hash);
+            const passwordCheck = await bcrypt.compare(password, ans.password_hash, () => {});
 
             const now = new Date();
             if (ans.locked_until && now < ans.locked_until) {
@@ -81,7 +81,7 @@ export const loginUser = async (req, res) => {
             return res.status(404).json({ message })
         }
     } catch (err) {
-        console.error(err);
+        console.error("erroor -> ", err);
         message = err.message
         return res.status(500).json({ message })
     }
