@@ -44,7 +44,7 @@ export const loginUser = async (req, res) => {
 
             const payload = {
                 email: email,
-                id: ans.id
+                id: ans.id  
             }
 
             // console.log(payload)

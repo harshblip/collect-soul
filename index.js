@@ -24,6 +24,8 @@ app.use(cookieParser());
 app.use('/upload', fileRoutes);
 app.use('/user', userRoutes);
 
+console.log(process.env.USER)
+
 app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 })
