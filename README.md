@@ -34,7 +34,7 @@ A collaborative content-sharing backend architecture built with scalability, sec
 - **Using SQL's arsenal** - unified table, normalizzed schema, CTE's for data retrieval, btree/gin indexes for fast lookups and sorting 😎, using triggers for automatic(😯) audit trails and consistency
 
 ## System Architecture
-<img src="/public/backendArch.png" alt="Backend Arch" width="600" height="250">
+<img src="/public/backendArch.png" alt="Backend Arch">
 
 Here's an high-level architecture of how this backend works 😁
 
