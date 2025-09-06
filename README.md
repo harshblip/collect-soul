@@ -15,54 +15,18 @@
 
 ## 🧠 Collect – Backend
 
-> A collaborative content-sharing backend architecture built with scalability, security, and real-time performance at its core.
+A collaborative content-sharing backend architecture built with scalability, security, and real-time performance at its core.
 
 > Checkout the workflow of the [backend](https://whimsical.com/AssHGnjcEBEoucSVXDV4LB)
 
-## 🚀 Features
-### 🔐 Authentication & Authorization
+## ✨ Features
 
-- Secure JWT-based authentication
-
-- Role-based access control
-
-- Email verification and password reset workflows
-
-### 🗂️ File and Content Management
-
-- Upload and organize files (photos, videos, notes)
-
-- Amazon S3 for scalable file storage
-
-- Support for metadata and versioning
-
-### 👥 Collaborative Sharing
-
-- Add collaborators with view/edit permissions
-
-- WebSocket-powered real-time folder sharing
-
-### ✍️ Notes with Live Editing
-
-- Real-time text collaboration using WebSockets (like Google Docs)
-
-- Optimized for low latency and synchronization
-
-### 📈 Rate Limiting & Account Lockout
-
-- IP + account-level rate-limiting
-
-- Progressive lockout mechanism after consecutive failed logins
-
-### 🛡️ Security Best Practices
-
-- Input sanitization and validation
-
-- Helmet for secure HTTP headers
-
-- Rate limiting and brute-force protection
-
-- Environment variable encryption (dotenv + secure secrets)
+- **Secure auth** 🐱‍👤😏 - w/ automatic token refreshing (coded jwt, pretty basic) on select (*remember me*) with rate limiting
+- **Progressive account lockout** 🔐 - your account gets locked for more and more time the more you enter wrong password 🙂
+- **Interact with files** 📸 - star, delete, recover, add to folders, lock them, download them. you can do so much oh my goodddd
+- **Infinitely nested folders** 📂 - create folders under folders under folders, lock them or delete them
+- **Trigram search**🔎 - leveraging ```pg_trgm``` extention for super fast db level trigram matching search results as you type
+- **Using SQL's arsenal** - unified table, normalizzed schema, CTE's for data retrieval, btree/gin indexes for fast lookups and sorting 😎, using triggers for automatic(😯) audit trails and consistency
 
 ## Local setup
 ### 📦 PostgreSQL Setup
