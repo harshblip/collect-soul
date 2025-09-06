@@ -22,11 +22,20 @@ A collaborative content-sharing backend architecture built with scalability, sec
 ## ✨ Features
 
 - **Secure auth** 🐱‍👤😏 - w/ automatic token refreshing (coded jwt, pretty basic) on select (*remember me*) with rate limiting
+  
 - **Progressive account lockout** 🔐 - your account gets locked for more and more time the more you enter wrong password 🙂
+  
 - **Interact with files** 📸 - star, delete, recover, add to folders, lock them, download them. you can do so much oh my goodddd
 - **Infinitely nested folders** 📂 - create folders under folders under folders, lock them or delete them
 - **Trigram search**🔎 - leveraging ```pg_trgm``` extention for super fast db level trigram matching search results as you type
 - **Using SQL's arsenal** - unified table, normalizzed schema, CTE's for data retrieval, btree/gin indexes for fast lookups and sorting 😎, using triggers for automatic(😯) audit trails and consistency
+
+## System Architecture
+<img src="/public/backendArch.png" alt="Backend Arch" width="600" height="250">
+
+Here's an high-level architecture of how this backend works 😁
+
+
 
 ## Local setup
 ### 📦 PostgreSQL Setup
