@@ -40,24 +40,31 @@ Here's an high-level architecture of how this backend works 😁
 
 ## Implementation details
 ### Auth
+
   - **Auto-refreshing tokens**
+    
     - which means the jwt access token gets replaced by an unexpired refresh token making it seamingly smooth experience for user. not requiring to logut and login again
     - this happens only when user sends ```true``` for ```remember me``` option from frontend (which basically remembers it by not expiring the auth token)
   - **Progressive Account Lockout**
+    
     - Incase any unknown human tries to sneak in to your account trying multiple times (wrong password) he will get cooked with the account getting locked.
     - the account gets locked for a specific interval of time initially and then as the number of wrong passwords increases - lockout time increases. muhahahhhahaha
 ### Files
+
   - **Trash/recover files**
+    
     - with everything being inspired from Google Drive itself. this feature also mimics it.
     - you delete a file, it doesn't directly erase from db but goes to trash
     - the trash keeps the files for 30dys and then periodically deletes it.
     - you can recover any file from trash before that
   - **Small utilities to files**
+    
     - star -> star a file which is important to you and be able to see it separately in other tab
     - delete
     - lock a file - lock your image with yo girlfriend so that nobody else sees it with encrypted passwords
     - add multiple files to folders
 ### Folders
+
   - **Lock folders**
   - **Nested folders**
     - create folders under folders under folders
@@ -67,14 +74,17 @@ Here's an high-level architecture of how this backend works 😁
 <img src="/public/fuzzy-search.jpeg" alt="Search flow">
   
   - **DB level fuzzy matchmaking**
+    
     - using ```gin``` indexes for lightning fast query results even in large datasets 
     - using ```pg_trgm``` extension of postgres. enabling db level fuzzy matchmaking of words
     - covering the case when you type "maptop" instead of "laptop" or "my borpther" instead of "my brother"
   - **Super strong multi-filter search**
+    
     - couldn't keep this normal too
     - search your queries along side with multiple filters 
     - streamline your search based on size, dateCreated, type, starred ornot. 
   - **Search-as-you-type with ranked suggestions**
+    
     - the results shown aren't just random result set but ranked from most relevant to least relevant based on the similarlty of the text.
     - it divides the text into a set of trigrams to calculate edit distance for the closest word. so words shown match what you are thinking
 
