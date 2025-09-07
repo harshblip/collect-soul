@@ -57,6 +57,9 @@ Here's an high-level architecture of how this backend works 😁
     - delete
     - lock a file - lock your image with yo girlfriend so that nobody else sees it with encrypted passwords
     - add multiple files to folders
+  - **Using pre-signed URLs**
+    - not just using envs and using aws sdk for uploading (noob)
+    - using a temporary pre-signed url received from s3 and uploading files through axios
 ### Folders
   - **Lock folders**
   - **Nested folders**
@@ -77,7 +80,17 @@ Here's an high-level architecture of how this backend works 😁
   - **Search-as-you-type with ranked suggestions**
     - the results shown aren't just random result set but ranked from most relevant to least relevant based on the similarlty of the text.
     - it divides the text into a set of trigrams to calculate edit distance for the closest word. so words shown match what you are thinking
-
+### Papa Postgres
+  - **unified, normalized schema**
+    - created unified signle table with enums for all types of media
+    - 3NF normalized to the core 
+    - columns indexed for faster retrieval with no wasted traversals
+  - **using CTE's and triggers**
+    - Instead of stacking subqueries inside subqueries, used common table expressions ```(WITH ... AS (...))``` to break big queries into smaller, understandable steps. Makes queries easy to read, debug, and maintain.
+    - cte's are cool
+    - For things like fetching files with folders, or combining filters + search results, CTEs let us chain logic together in one SQL call. That means fewer round-trips to the database and faster responses.
+    - utlized triggers. db on autopilot. somethings in the tables needed to be updated as soon as other fields were changing. instead of writing multiple ```UPDATE``` queries just stick triggers to those columns. fires when condition hits
+- 
 ## Local setup
 ### 📦 PostgreSQL Setup
 - Download and install PostgreSQL from the official website or use your system’s package manager.
@@ -110,11 +123,4 @@ S3_BUCKET_NAME=
 
 ACCESS_SECRET = 
 REFRESH_SECRET = 
-```
-
-## schema diagram
-<img src="/collect-schema.png" width="780" height="450">
-
-```
-https://drawsql.app/teams/tcs-56/diagrams/collect-schemas
 ```
