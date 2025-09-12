@@ -1,8 +1,7 @@
-const { pool } = require("../../config/db")
-
+import { pool } from "../../config/db.js"
 // let path = []
 
-const findFolder = async (folderId, path = []) => {
+export const findFolder = async (folderId, path = []) => {
     if (!folderId) {
         return
     }
@@ -18,5 +17,3 @@ const findFolder = async (folderId, path = []) => {
     await findFolder(parent_id, path)
 
 }
-
-module.exports = { findFolder }

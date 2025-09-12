@@ -1,6 +1,6 @@
 import { upload } from '../../middlewares/fileChecker.js';
 import { pool, s3 } from '../../config/db.js';
-import { uploadFileFn } from '../services/media.service.js';
+import { getFileInfo, uploadFileFn } from '../services/media.service.js';
 
 let message = ''
 
@@ -133,7 +133,7 @@ export const getStars = async (req, res) => {
     const { userId } = req.query;
 
     try {
-        const query = `select * from images where user_id = $1 and starred = $2`
+        const query = `select * from files where user_id = $1 and starred = $2`
         const result = await pool.query(query, [userId, true])
 
         return res.status(200).json({ message: result.rows })

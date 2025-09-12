@@ -1,6 +1,7 @@
 import { isValidFileSize, removeFileExtension } from '../utils/validator.js';
 import { pool, s3 } from '../../config/db.js';
 import { createS3Folder, uploadBufferToS3 } from '../utils/s3uploader.js';
+import { findFolder } from '../utils/nestedFolders.js';
 
 export const getFileInfo = async (user_id, id) => {
     if (!id) {
