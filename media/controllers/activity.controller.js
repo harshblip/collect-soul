@@ -1,3 +1,5 @@
+import { getLastOpenedFiles } from "../services/activity.service.js"
+
 export const updateLastSeen = async (req, res) => {
     const { fileId, type } = req.body
 
