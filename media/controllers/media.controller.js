@@ -1,6 +1,6 @@
 import { upload } from '../../middlewares/fileChecker.js';
 import { pool, s3 } from '../../config/db.js';
-import { getFileInfo, uploadFileFn } from '../services/media.service.js';
+import { deleteMediaFn, getFileInfo, trashMediaFn, uploadFileFn } from '../services/media.service.js';
 
 let message = ''
 

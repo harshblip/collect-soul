@@ -35,7 +35,7 @@ router.get('/getVideos', auth, [
     return message
 })
 
-router.delete('/deleteMedia', auth, [
+router.delete('/deleteMedia', [
     query('username').trim().escape().isAlpha().withMessage("username should be in text format"),
     query('id').trim().escape().isInt().withMessage("id should be a number")
 ], async (req, res) => {
@@ -233,47 +233,6 @@ router.post('/unlockfolder', [
     const message = await unlockFolder(req, res)
     return message
 })
-
-router.post('/updateLastOpened', [
-    body('type').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("password should be in text format"),
-    body('fileId').trim().escape().isInt().withMessage("folderId should be a number")
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const error = errors.array();
-        const message = error[0].msg
-        return message
-    }
-
-    const message = await updateLastSeen(req, res)
-    return message
-})
-
-router.get('/getRecentlyOpened', [
-    query('userId').trim().escape().isInt().withMessage("userId should be a number"),
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const error = errors.array();
-        const message = error[0].msg
-        return message
-    }
-    const message = await getLastseen(req, res)
-    return message
-})
-
-router.get('/getStarFiles', [
-    query('userId').trim().escape().isInt().withMessage("userId should be a number"),
-], async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        const error = errors.array();
-        const message = error[0].msg
-        return message
-    }
-    // const message 
-})
-
 
 
 export default router

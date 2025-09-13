@@ -1,6 +1,7 @@
 import express from 'express'
 import { updateLastSeen } from '../../media/controllers/activity.controller.js';
 import { body, validationResult } from 'express-validator';
+import { trashMedia } from '../../media/controllers/media.controller.js';
 
 const updateRoute = express.Router()
 
@@ -18,5 +19,7 @@ updateRoute.post('/updateLastOpened', [
     const message = await updateLastSeen(req, res)
     return message
 })
+
+updateRoute.post('/trashMedia', trashMedia)
 
 export default updateRoute

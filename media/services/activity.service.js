@@ -3,7 +3,8 @@ import { pool } from '../../config/db.js';
 export const updateLastSeenFn = async (fileId, type) => {
     const query = `update ${type} set updated_at = $1 where id = $2`
     await pool.query(query, [new Date(), fileId])
-    return message = `updated last seen`
+    const message = `updated last seen`
+    return message
 }
 
 export const getLastOpenedFiles = async (userId) => {
