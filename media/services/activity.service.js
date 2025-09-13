@@ -21,9 +21,10 @@ export const getLastOpenedFiles = async (userId) => {
             created_at,
             updated_at,
             starred,
+            is_trashed,
             size
         FROM files
-        WHERE user_id = $1 and folder_id is null
+        WHERE user_id = $1 and folder_id is null and is_trashed = $2
         UNION ALL
         SELECT 
         id,
@@ -37,12 +38,13 @@ export const getLastOpenedFiles = async (userId) => {
         created_at,
         updated_at,
         starred,
+        false as is_trashed,
         size
         FROM folders
         WHERE user_id = $1 and parent_id is null
         ORDER BY updated_at DESC
     `
-    const result = await pool.query(query, [userId])
+    const result = await pool.query(query, [userId, false])
     const res = result.rows
     return res
 }

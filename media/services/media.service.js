@@ -178,12 +178,14 @@ export const recoverMediaFn = async (files) => {
         await client.query(query2, [id])
     }
     await client.query('COMMIT')
-    return message = "media recovered"
+    const message ='media recovered'
+    return message
 }
 
 export const trashMediaFn = async (files) => {
     const client = await pool.connect();
     await client.query('BEGIN')
+    // console.log()
     for (const file of files) {
         const { fileName, url, size, type, fileId, id } = file
         console.log(fileName, url, size, type, fileId)
@@ -194,5 +196,6 @@ export const trashMediaFn = async (files) => {
         await client.query(query2, [fileName, url, size, id, type, fileId])
     }
     await client.query('COMMIT')
-    return message = "media trashed"
+    const message = 'media trashed'
+    return message
 }

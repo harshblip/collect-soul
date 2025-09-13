@@ -1,6 +1,6 @@
 import express from 'express'
 import { query, validationResult } from 'express-validator';
-import { deleteMedia } from '../../media/controllers/media.controller';
+import { deleteMedia } from '../../media/controllers/media.controller.js';
 
 const deleteRoute = express.Router()
 

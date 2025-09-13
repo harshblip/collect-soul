@@ -133,8 +133,8 @@ export const getStars = async (req, res) => {
     const { userId } = req.query;
 
     try {
-        const query = `select * from files where user_id = $1 and starred = $2`
-        const result = await pool.query(query, [userId, true])
+        const query = `select * from files where user_id = $1 and starred = $2 and is_trashed = $3`
+        const result = await pool.query(query, [userId, true, false])
 
         return res.status(200).json({ message: result.rows })
     } catch (err) {
@@ -162,7 +162,7 @@ export const getAllFiles = async (req, res) => {
                 starred,
                 size
             FROM files
-            WHERE user_id = $1 AND folder_id IS NULL
+            WHERE user_id = $1 AND folder_id IS NULL AND is_trashed = $4
 
             UNION ALL
 
@@ -179,7 +179,7 @@ export const getAllFiles = async (req, res) => {
                 starred,
                 size
         FROM folders
-            WHERE user_id = $1 AND parent_id IS NULL
+            WHERE user_id = $1 AND parent_id IS NULL AND is_trashed = $4
         ),
         total_count AS (
             SELECT COUNT(*) as total FROM combined
@@ -191,7 +191,7 @@ export const getAllFiles = async (req, res) => {
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3;
         `
-        const result = await pool.query(query, [user_id, limit, offset])
+        const result = await pool.query(query, [user_id, limit, offset, false])
         const rows = result.rows
         return res.status(200).json({ message: rows })
     } catch (err) {
