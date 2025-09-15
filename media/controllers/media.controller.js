@@ -155,7 +155,7 @@ export const getAllFiles = async (req, res) => {
                 file_name,
                 file_type,
                 file_url,
-                false as is_locked,
+                is_locked,
                 password,
                 0 as parent_id,
                 created_at,
