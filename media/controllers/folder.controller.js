@@ -2,11 +2,11 @@ import { upload } from '../../middlewares/fileChecker.js';
 import { pool, s3 } from '../../config/db.js';
 
 export const createFolder = async (req, res) => {
-    const { id, name, description, is_locked, password } = req.body;
+    const { id, name, description, is_locked, password, parent_id } = req.body;
     try {
-        const query = `insert into folders (user_id, file_name, description, is_locked, password) values ($1, $2, $3, $4, $5)`
-        await pool.query(query, [id, name, description, is_locked, password])
-        message = "new folder created"
+        const query = `insert into folders (user_id, file_name, description, is_locked, password, parent_id) values ($1, $2, $3, $4, $5, $6)`
+        await pool.query(query, [id, name, description, is_locked, password, parent_id])
+        const message = "new folder created"
         return res.status(201).json({ message: message })
     } catch (err) {
         console.error(err);
