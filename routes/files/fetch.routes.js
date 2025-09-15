@@ -3,6 +3,7 @@ import { getSearchResults, getSuggestions } from '../../media/controllers/search
 import { body, query, validationResult } from 'express-validator';
 import { getAllFiles, getFileInfoController, getStars } from '../../media/controllers/media.controller.js';
 import { getLastseen } from '../../media/controllers/activity.controller.js';
+import { folderItems } from '../../media/controllers/folder.controller.js';
 
 const fetchRoute = express.Router()
 
@@ -86,6 +87,20 @@ fetchRoute.get('/getRecentlyOpened', [
         return message
     }
     const message = await getLastseen(req, res)
+    return message
+})
+
+fetchRoute.get('/folderItems', [
+    query('userId').trim().escape().isInt().withMessage("userId should be a number"),
+    query('folderId').trim().escape().isInt().withMessage("folderId should be a number")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return message
+    }
+    const message = await folderItems(req, res)
     return message
 })
 

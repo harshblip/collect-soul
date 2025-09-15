@@ -27,19 +27,19 @@ export const getLastOpenedFiles = async (userId) => {
         WHERE user_id = $1 and folder_id is null and is_trashed = $2
         UNION ALL
         SELECT 
-        id,
-        user_id,
-        file_name,
-        null as file_url,
-        'folder' AS file_type,
-        is_locked,
-        password,
-        parent_id,
-        created_at,
-        updated_at,
-        starred,
-        false as is_trashed,
-        size
+            id,
+            user_id,
+            file_name,
+            null as file_url,
+            'folder' AS file_type,
+            is_locked,
+            password,
+            parent_id,
+            created_at,
+            updated_at,
+            starred,
+            false as is_trashed,
+            size
         FROM folders
         WHERE user_id = $1 and parent_id is null
         ORDER BY updated_at DESC

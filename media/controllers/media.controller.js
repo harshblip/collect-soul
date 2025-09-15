@@ -159,6 +159,7 @@ export const getAllFiles = async (req, res) => {
                 password,
                 0 as parent_id,
                 created_at,
+                is_trashed,
                 starred,
                 size
             FROM files
@@ -176,10 +177,11 @@ export const getAllFiles = async (req, res) => {
                 password,
                 parent_id,
                 created_at,
+                false as is_trashed,
                 starred,
                 size
         FROM folders
-            WHERE user_id = $1 AND parent_id IS NULL AND is_trashed = $4
+            WHERE user_id = $1 AND parent_id IS NULL
         ),
         total_count AS (
             SELECT COUNT(*) as total FROM combined
