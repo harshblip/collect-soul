@@ -1,4 +1,4 @@
-import { lockFilesFn, unlockFiles } from "../services/lock.service.js"
+import { lockFilesFn, unlockFiles, unlockFolderFn } from "../services/lock.service.js"
 
 export const lockFile = async (req, res) => {
     const { password, fileId } = req.body

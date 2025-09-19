@@ -35,7 +35,7 @@ export const getImageByFolder = (req, res) => {
 export const addFilestoFolder = async (req, res) => {
     const { files, folderId } = req.body
     try {
-        const message = await addFilestoFolderFn(files, folderId)
+        const message = await addFilestoFolderFn(files, folderId) 
         return res.status(201).json({ message: message })
     } catch (err) {
         console.error(err);
