@@ -1,4 +1,4 @@
-const { pool, s3 } = require('../../config/db');
+import { pool } from "../../config/db.js"
 
 export const addFilestoFolderFn = async (files, folderId) => {
     console.log(files)

@@ -5,6 +5,7 @@ import { recoverMedia, renameMedia, starFile, trashMedia } from '../../media/con
 import { addFilestoFolder, createFolder } from '../../media/controllers/folder.controller.js';
 import { lockFile, unlockFile } from '../../media/controllers/lock.controller.js';
 import uploadRoute from './upload.routes.js';
+import { addFilestoFolderFn } from '../../media/services/folder.service.js';
 
 const updateRoute = express.Router()
 
@@ -94,7 +95,7 @@ updateRoute.post('/addFilestoFolder', [
     if (!error.isEmpty()) {
         return res.status(400).json({ message: errors[0].msg })
     }
-    const message = await addFilestoFolder(req, res);
+    const message = await addFilestoFolderFn(req, res);
     return message
 })
 
