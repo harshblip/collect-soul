@@ -20,7 +20,7 @@ export const getFolders = async (req, res) => {
         const query = `select * from folders where user_id = $1`
         const result = await pool.query(query, [id])
         console.log("folders: ", result.rows)
-        message = result.rows
+        const message = result.rows
         return res.status(200).json({ message: result.rows })
     } catch (err) {
         console.error(err);

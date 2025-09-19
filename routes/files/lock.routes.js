@@ -1,7 +1,23 @@
 import express from 'express'
-import { lockFile, unlockFile, unlockFolder } from '../../media/controllers/lock.controller';
+import { body, validationResult } from 'express-validator';
+import { lockFile, lockFolder, unlockFile, unlockFolder } from '../../media/controllers/lock.controller.js';
 
 const lockRoute = express.Router()
+
+lockRoute.post('lockfolder', [
+    body('password').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("password should be in text format"),
+    body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
+], async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = errors.array();
+        const message = error[0].msg
+        return message
+    }
+
+    const message = await lockFolder(req, res)
+    return message
+})
 
 lockRoute.post('/unlockfolder', [
     body('folderId').trim().escape().isInt().withMessage("folderId should be a number")

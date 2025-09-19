@@ -1,6 +1,6 @@
 import express from 'express'
 import { getSearchResults, getSuggestions } from '../../media/controllers/search.controller.js';
-import { body, query, validationResult } from 'express-validator';
+import { query, validationResult } from 'express-validator';
 import { getAllFiles, getFileInfoController, getStars } from '../../media/controllers/media.controller.js';
 import { getLastseen } from '../../media/controllers/activity.controller.js';
 import { folderItems, getFolders } from '../../media/controllers/folder.controller.js';
