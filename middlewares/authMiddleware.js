@@ -32,7 +32,7 @@ export const authenticateToken = (req, res, next) => {
                     return res.status(403).json({ message: "invalid refresh token. pls login again" })
                 }
 
-                const newAccessToken = jwt.sign({ email: decoded.email }, REFRESH_SECRET, { expiresIn: '1d' });
+                const newAccessToken = jwt.sign({ username: decoded.username, id: decoded.id }, REFRESH_SECRET, { expiresIn: '1d' });
                 console.log("new tokens", token, newAccessToken)
                 res.setHeader('Authorization', `Bearer ${newAccessToken}`);
                 req.user = user;
