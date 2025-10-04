@@ -1,6 +1,6 @@
 <div align="center">
   
-<img src="/public/github-logo.png" alt="Circular Image" width="600" height="250">
+<img src="/public/github-logo.png" alt="Circular Image" width="600" height="300">
 
 </div>
 <h3 align="center"> backend to a main project </h3>
