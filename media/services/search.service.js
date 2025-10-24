@@ -2,7 +2,7 @@ import { pool } from '../../config/db.js';
 
 export const getSuggestionsFn = async (word, userId,) => {
     const query = `
-        SELECT word_similarity(file_name, $1), file_name, file_type, file_url, is_locked, password, size, id
+        SELECT word_similarity(file_name, $1), file_name, created_at, file_type, file_url, is_locked, password, size, id
         FROM files
         WHERE user_id = $2
         AND (
