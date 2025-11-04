@@ -1,5 +1,6 @@
 import { upload } from '../../middlewares/fileChecker.js';
 import { pool, s3 } from '../../config/db.js';
+import { addFilestoFolderFn } from '../services/folder.service.js';
 
 export const createFolder = async (req, res) => {
     const { id, name, description, is_locked, password, parent_id } = req.body;
@@ -34,6 +35,7 @@ export const getImageByFolder = (req, res) => {
 
 export const addFilestoFolder = async (req, res) => {
     const { files, folderId } = req.body
+    console.log("filessss", files)
     try {
         const message = await addFilestoFolderFn(files, folderId) 
         return res.status(201).json({ message: message })

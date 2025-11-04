@@ -16,7 +16,7 @@ export const unlockFiles = async (fileId) => {
 
 export const lockFolderFn = async (password, folderId) => {
     const query = `update folders set is_locked = $1, password = $2 where id = $3`
-    await pool.query(query, [true, password, fileId])
+    await pool.query(query, [true, password, folderId])
     const message = 'password saved'
     return message
 }

@@ -4,6 +4,7 @@ import { query, validationResult } from 'express-validator';
 import { getAllFiles, getFileInfoController, getStars } from '../../media/controllers/media.controller.js';
 import { getLastseen } from '../../media/controllers/activity.controller.js';
 import { folderItems, getFolders } from '../../media/controllers/folder.controller.js';
+import { authenticateToken as auth} from '../../middlewares/authMiddleware.js'
 
 const fetchRoute = express.Router()
 
@@ -63,7 +64,7 @@ fetchRoute.get('/getFileInfo', [
     return message
 })
 
-fetchRoute.get('/getAllFiles', [
+fetchRoute.get('/getAllFiles', auth, [
     query('user_id').trim().escape().isInt().withMessage("user_id should be a number"),
     query('page').trim().escape().isInt().withMessage("page should be a number")
 ], async (req, res) => {

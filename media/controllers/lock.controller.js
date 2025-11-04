@@ -1,4 +1,4 @@
-import { lockFilesFn, unlockFiles, unlockFolderFn } from "../services/lock.service.js"
+import { lockFilesFn, lockFolderFn, unlockFiles, unlockFolderFn } from "../services/lock.service.js"
 
 export const lockFile = async (req, res) => {
     const { password, fileId } = req.body
@@ -26,7 +26,7 @@ export const lockFolder = async (req, res) => {
     const { password, folderId } = req.body
 
     try {
-        const message = await lockFilesFn(password, folderId)
+        const message = await lockFolderFn(password, folderId)
         return res.status(201).json({ message: message })
     } catch (err) {
         return res.status(500).json({ message: err.message })

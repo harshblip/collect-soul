@@ -95,7 +95,7 @@ updateRoute.post('/addFilestoFolder', [
     if (!error.isEmpty()) {
         return res.status(400).json({ message: errors[0].msg })
     }
-    const message = await addFilestoFolderFn(req, res);
+    const message = await addFilestoFolder(req, res);
     return message
 })
 

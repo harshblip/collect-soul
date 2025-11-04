@@ -4,7 +4,7 @@ import { lockFile, lockFolder, unlockFile, unlockFolder } from '../../media/cont
 
 const lockRoute = express.Router()
 
-lockRoute.post('lockfolder', [
+lockRoute.post('/lockfolder', [
     body('password').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("password should be in text format"),
     body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
 ], async (req, res) => {

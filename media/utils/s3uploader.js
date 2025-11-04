@@ -3,13 +3,24 @@ import axios from 'axios';
 
 const s3 = new aws.S3();
 
-export async function uploadBufferToS3(buffer, key, contentType) {
+export async function uploadBufferToS3(buffer, key, thumbnailKey, contentType) {
     const signedUrl = s3.getSignedUrl('putObject', {
         Bucket: process.env.S3_BUCKET_NAME,
         Key: key,
         Expires: 60,
         ContentType: contentType,
     });
+
+     const anothersignedUrl = s3.getSignedUrl('putObject', {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: thumbnailKey,
+        Expires: 60,
+        ContentType: contentType,
+    });
+
+    // await axios.put(anothersignedUrl, , {
+    //     headers: { 'Content-Type': contentType}
+    // })
 
     await axios.put(signedUrl, buffer, {
         headers: { 'Content-Type': contentType },

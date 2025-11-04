@@ -62,6 +62,7 @@ export const uploadFileFn = async (file, username, userId, message) => {
     const fileName = removeFileExtension(notfileName)
     const folderKey = `${username}/${fileName}/`;
     const fileKey = `${folderKey}${fileName}`;
+    const thumbnailKey = `${folderKey}${fileName}-thumbnail`
     const contentType = file.mimetype;
     const size = file.size;
 
@@ -89,7 +90,7 @@ export const uploadFileFn = async (file, username, userId, message) => {
         return message;
     }
 
-    const url = await uploadBufferToS3(file.buffer, fileKey, contentType);
+    const url = await uploadBufferToS3(file.buffer, fileKey, thumbnailKey, contentType);
 
     const query = `INSERT INTO files (file_name, file_url, size, user_id, file_type) 
     VALUES ($1, $2, $3, $4, $5)`;
