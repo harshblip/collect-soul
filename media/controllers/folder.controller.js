@@ -56,7 +56,7 @@ export const folderItems = async (req, res) => {
             file_type,
             file_url,
             is_locked,
-            '' as password,
+            password,
             0 as parent_id,
             created_at,
             starred,
