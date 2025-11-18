@@ -13,8 +13,8 @@ export const getFileInfo = async (user_id, id) => {
     const images = result.rows
 
     let path = []
+    // console.log(images)
     await findFolder(images[0].folder_id, path)
-    console.log(path)
 
     const fileInfo = {
         image: images,

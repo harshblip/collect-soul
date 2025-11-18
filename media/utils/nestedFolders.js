@@ -2,13 +2,12 @@ import { pool } from "../../config/db.js"
 // let path = []
 
 export const findFolder = async (folderId, path = []) => {
-    if (!folderId) {
+    if (folderId === null) {
         return
     }
 
     const getFolderName = `select file_name, parent_id from folders where id = $1`
     const result = await pool.query(getFolderName, [folderId])
-    // console.log(path)
 
     const folderName = result.rows[0].file_name
     const parent_id = result.rows[0].parent_id
