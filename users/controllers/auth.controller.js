@@ -59,7 +59,7 @@ export const loginUser = async (req, res) => {
                     sameSite: 'Strict',
                     maxAge: checked === true ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000
                 })
-                return res.status(200).json({ message: "user logged in successfully", access_token })
+                return res.status(200).json({ message: access_token })
             } else {
                 let failedAttempts = ans.failed_attempts + 1;
                 let lockoutLevel = ans.lockout_level;
