@@ -1,5 +1,6 @@
 import { pool } from "../../config/db.js";
 import bcrypt from 'bcrypt'
+import { getUsers } from "./auth.controller.js";
 
 export const deleteUser = async (req, res) => {
     const { id, email } = req.query;
@@ -52,7 +53,7 @@ export const updatePassword = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const query = `update users set password_hash = $1 where email = $2`
+        const query = `update users set password = $1 where email = $2`
         const check = await pool.query(query, [hashedPassword, email])
 
         console.log("check new password", check.rowCount)
@@ -81,7 +82,7 @@ export const createUsers = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const query = `insert into users (username, email, password_hash) values ($1, $2, $3)`;
+        const query = `insert into users (username, email, password) values ($1, $2, $3)`;
 
         const result = await pool.query(query, [username, email, hashedPassword]);
         console.log(result);
