@@ -1,6 +1,6 @@
 import { upload } from '../../middlewares/fileChecker.js';
 import { pool, s3 } from '../../config/db.js';
-import { deleteMediaFn, getFileInfo, recoverMediaFn, renameMediaFn, trashMediaFn, uploadFileFn } from '../services/media.service.js';
+import { deleteMediaFn, getFileInfo, getTrashedFilesFn, recoverMediaFn, renameMediaFn, trashMediaFn, uploadFileFn } from '../services/media.service.js';
 
 let message = ''
 
@@ -101,6 +101,17 @@ export const trashMedia = async (req, res) => {
     }
 }
 
+export const getTrashedFiles = async (req, res) => {
+    const { userId } = req.query
+
+    try {
+        const message = await getTrashedFilesFn(userId)
+        return res.status(200).json({ message: message })
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
 export const recoverMedia = async (req, res) => {
     const { files } = req.body;
     const client = await pool.connect();
@@ -137,6 +148,22 @@ export const getStars = async (req, res) => {
         const result = await pool.query(query, [userId, true, false])
 
         return res.status(200).json({ message: result.rows })
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+export const enableDelete = async (req, res) => {
+    const { userId, checked } = req.body;
+
+    try {
+        const query = `update users set auto_cleanup_enabled = $2 where id = $1`
+        await pool.query(query, [userId, checked])
+
+        const mesquery = `select auto_cleanup_enabled from users where id = $1`
+        const msg = await pool.query(mesquery, [userId])
+        console.log("messagerows", msg.rows[0].auto_cleanup_enabled)
+        return res.status(200).json({ message: msg.rows[0].auto_cleanup_enabled })
     } catch (err) {
         return res.status(500).json({ message: err.message })
     }

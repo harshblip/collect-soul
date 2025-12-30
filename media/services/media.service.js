@@ -17,7 +17,7 @@ export const getFileInfo = async (user_id, id) => {
     await findFolder(images[0].folder_id, path)
 
     const fileInfo = {
-        image: images,
+        file: images[0],
         filePath: path
     }
 
@@ -179,7 +179,7 @@ export const recoverMediaFn = async (files) => {
         await client.query(query2, [id])
     }
     await client.query('COMMIT')
-    const message ='media recovered'
+    const message = 'media recovered'
     return message
 }
 
@@ -199,4 +199,16 @@ export const trashMediaFn = async (files) => {
     await client.query('COMMIT')
     const message = 'media trashed'
     return message
+}
+
+export const getTrashedFilesFn = async (userId) => {
+    if (!userId) {
+        const msg = "userId is empty"
+        return msg
+    }
+
+    const query = `select * from trash where user_id = $1`
+    const trashedMedia = await pool.query(query, [userId])
+    // console.log(trashedMedia.rows)
+    return trashedMedia.rows
 }

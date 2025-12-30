@@ -1,7 +1,7 @@
 import express from 'express'
 import { getSearchResults, getSuggestions } from '../../media/controllers/search.controller.js';
 import { query, validationResult } from 'express-validator';
-import { getAllFiles, getFileInfoController, getStars } from '../../media/controllers/media.controller.js';
+import { getAllFiles, getFileInfoController, getStars, getTrashedFiles } from '../../media/controllers/media.controller.js';
 import { getLastseen } from '../../media/controllers/activity.controller.js';
 import { folderItems, getFolders } from '../../media/controllers/folder.controller.js';
 import { authenticateToken as auth} from '../../middlewares/authMiddleware.js'
@@ -91,17 +91,16 @@ fetchRoute.get('/getRecentlyOpened', [
     return message
 })
 
-fetchRoute.get('/folderItems', [
+fetchRoute.get('/getTrashedFiles', [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
-    query('folderId').trim().escape().isInt().withMessage("folderId should be a number")
-], async (req, res) => {
+], async(req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         const error = errors.array();
         const message = error[0].msg
         return message
     }
-    const message = await folderItems(req, res)
+    const message = await getTrashedFiles(req, res)
     return message
 })
 

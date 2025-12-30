@@ -1,7 +1,7 @@
 import express from 'express'
 import { updateLastSeen } from '../../media/controllers/activity.controller.js';
 import { body, validationResult } from 'express-validator';
-import { recoverMedia, renameMedia, starFile, trashMedia } from '../../media/controllers/media.controller.js';
+import { enableDelete, recoverMedia, renameMedia, starFile, trashMedia } from '../../media/controllers/media.controller.js';
 import { addFilestoFolder, createFolder } from '../../media/controllers/folder.controller.js';
 import { lockFile, unlockFile } from '../../media/controllers/lock.controller.js';
 import uploadRoute from './upload.routes.js';
@@ -112,5 +112,20 @@ updateRoute.put('/rename', [
     console.log(message)
     return message;
 })
+
+updateRoute.post('/enableAutoDelete', [
+    body('userId').trim().escape().isInt().withMessage("userId should be a number")
+], async (req, res) => {
+    const error = validationResult(req);
+    const errors = error.array();
+    console.log(errors)
+    if (!error.isEmpty()) {
+        return res.status(400).json({ message: errors[0].msg })
+    }
+    const message = await enableDelete(req, res);
+    console.log("enableDelete", message)
+    return message;
+})
+
 
 export default updateRoute
