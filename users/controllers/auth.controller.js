@@ -33,7 +33,7 @@ export const loginUser = async (req, res) => {
     console.log("ans", ans, checked);
     try {
         if (ans) {
-            const passwordCheck = true;
+            const passwordCheck = bcrypt.compare(password, ans.password_hash, () => {});
 
             const now = new Date();
             if (ans.locked_until && now < ans.locked_until) {
