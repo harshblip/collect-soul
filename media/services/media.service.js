@@ -91,7 +91,7 @@ export const uploadFileFn = async (file, username, userId, message) => {
     }
 
     const url = await uploadBufferToS3(file.buffer, fileKey, thumbnailKey, contentType);
-
+    console.log(url, userId)
     const query = `INSERT INTO files (file_name, file_url, size, user_id, file_type) 
     VALUES ($1, $2, $3, $4, $5)`;
     await pool.query(query, [fileName, url, size, userId, type]);

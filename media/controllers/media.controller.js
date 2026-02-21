@@ -13,9 +13,10 @@ export const postMedia = async (req, res) => {
                 return { message: err.message }
             }
             try {
-                const username = req.body.username;
+                // console.log("yooohoooo", req.body)
+                const username = req.body.username
+                const userId = req.body.userId
                 const files = req.files;
-
                 const userFolderKey = `${username}`;
 
                 const listParams = {
@@ -34,7 +35,7 @@ export const postMedia = async (req, res) => {
                 }
 
                 for (const file of files) {
-                    await uploadFileFn(file, username, 3, message)
+                    await uploadFileFn(file, username, userId, message)
                 }
 
                 return { message: message }
