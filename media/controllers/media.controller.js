@@ -49,9 +49,9 @@ export const postMedia = async (req, res) => {
 
 
 export const getFileInfoController = async (req, res) => {
-    const { user_id, id } = req.query;
+    const { user_id, id, type } = req.query;
     try {
-        const result = await getFileInfo(user_id, id)
+        const result = await getFileInfo(user_id, id, type)
         return res.status(200).json({ message: result })
     } catch (err) {
         message = err.message
@@ -164,8 +164,21 @@ export const enableDelete = async (req, res) => {
         const mesquery = `select auto_cleanup_enabled from users where id = $1`
         const msg = await pool.query(mesquery, [userId])
         console.log("messagerows", msg.rows[0].auto_cleanup_enabled)
-        return res.status(200).json({ message: msg.rows[0].auto_cleanup_enabled })
+        return res.status(200).json({ message: mag === false ? "auto delete disabled" : "auto delete enabled" })
     } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+export const getTrashStatus = async (req, res) => {
+    const { userId } = req.query;
+    try {
+        const query = `select auto_cleanup_enabled from users where id = $1`
+        const result = await pool.query(query, [userId])
+
+        return res.status(200).json({ message: result.rows[0].auto_cleanup_enabled })
+    } catch (err) {
+        console.error(err);
         return res.status(500).json({ message: err.message })
     }
 }

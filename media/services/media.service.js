@@ -10,11 +10,14 @@ export const getFileInfo = async (user_id, id) => {
     }
     const query = `select * from files where user_id = $1 and id = $2`;
     const result = await pool.query(query, [user_id, id]);
-    const images = result.rows
+    const images = result.rows[0]
 
     let path = []
-    // console.log(images)
-    await findFolder(images[0].folder_id, path)
+    console.log(result)
+
+    if(images[0].folder_id){
+        await findFolder(images[0].folder_id, path)
+    }
 
     const fileInfo = {
         file: images[0],
@@ -24,33 +27,38 @@ export const getFileInfo = async (user_id, id) => {
     return fileInfo
 }
 
+export async function deleteFromS3(username, fileName) {
+    const filePath = `${username}/${fileName}/`;
+
+    const listParams = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Prefix: filePath
+    }
+
+    const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+    if (!listedObjects.Contents.length) {
+        const message = "Folder not found or already deleted"
+        return message;
+    }
+
+    const deleteParam = {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Delete: {
+            Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
+        }
+    }
+
+    await s3.deleteObjects(deleteParam).promise();
+}
+
 export const deleteMediaFn = async (username, files, id) => {
     for (const fileName of files) {
-        const filePath = `${username}/${fileName}/`;
 
-        const listParams = {
-            Bucket: process.env.S3_BUCKET_NAME,
-            Prefix: filePath
-        }
+        await deleteFromS3(username, fileName)
 
-        const listedObjects = await s3.listObjectsV2(listParams).promise();
-
-        if (!listedObjects.Contents.length) {
-            message = "Folder not found or already deleted"
-            return message;
-        }
-
-        const deleteParam = {
-            Bucket: process.env.S3_BUCKET_NAME,
-            Delete: {
-                Objects: listedObjects.Contents.map(obj => ({ Key: obj.Key }))
-            }
-        }
-
-        await s3.deleteObjects(deleteParam).promise();
-
-        const query = `delete from files where file_name = $1 and user_id = $2`;
-        pool.query(query, [fileName, id]);
+        const query = `update files set is_trashed = $1  where file_name = $2 and user_id = $3`;
+        pool.query(query, [true, fileName, id]);
     }
 
     message = `file${files.length > 1 ? `s` : ``} deleted successfully !`
@@ -89,16 +97,28 @@ export const uploadFileFn = async (file, username, userId, message) => {
         message = `${type} file too big`
         return message;
     }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN')
+        const url = await uploadBufferToS3(file.buffer, fileKey, thumbnailKey, contentType);
+        console.log(url, userId)
 
-    const url = await uploadBufferToS3(file.buffer, fileKey, thumbnailKey, contentType);
-    console.log(url, userId)
-    const query = `INSERT INTO files (file_name, file_url, size, user_id, file_type) 
-    VALUES ($1, $2, $3, $4, $5)`;
-    await pool.query(query, [fileName, url, size, userId, type]);
+        const query = `INSERT INTO files (file_name, file_url, size, user_id, file_type) 
+        VALUES ($1, $2, $3, $4, $5)`;
+        await pool.query(query, [fileName, url, size, userId, type]);
 
-    message = "File uploaded successfully"
-    return message;
+        await client.query('COMMIT')
 
+        message = "File uploaded successfully"
+        return message;
+    } catch (err) {
+        await client.query('ROLLBACK');
+        deleteFromS3(fileName)
+        console.error("Transaction failed, rolled back.", err);
+        throw err;
+    } finally {
+        client.release()
+    }
 }
 
 export const renameMediaFn = async (username, oldFileName, newFileName, user_id) => {
@@ -125,12 +145,12 @@ export const renameMediaFn = async (username, oldFileName, newFileName, user_id)
         const copyPromise = listedObjects.Contents.map(async (x) => {
             const oldKey = x.Key;
 
-            const suffix = oldKey.substring(oldPrefix.length); // like: oldFileName, oldFileName_display.webp
-            const updatedSuffix = suffix.replace(oldFileName, newFileName); // updated file name
+            const suffix = oldKey.substring(oldPrefix.length);
+
+            const updatedSuffix = suffix.replace(oldFileName, newFileName);
             const newKey = `${newPrefix}${updatedSuffix}`;
 
             const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${newKey.replace(/ /g, '+')}`;
-            // console.log(newKey, fileUrl)
 
             urls.push(fileUrl)
 
@@ -167,38 +187,25 @@ export const renameMediaFn = async (username, oldFileName, newFileName, user_id)
 }
 
 export const recoverMediaFn = async (files) => {
-    const client = await pool.connect();
-    await client.query('BEGIN')
-    for (const file of files) {
-        const { fileId, id } = file
-        // console.log(fileName, url, size, fileId)
-        const query1 = `update files set is_trashed = $1 where id = $2`
-        await client.query(query1, [false, fileId])
 
-        const query2 = `delete from trash where id = $1`
-        await client.query(query2, [id])
+    for (const file of files) {
+        const { fileId } = file;
+
+        const query = `UPDATE files SET is_trashed = $1 WHERE id = $2`;
+        await pool.query(query, [false, fileId]);
     }
-    await client.query('COMMIT')
-    const message = 'media recovered'
-    return message
+    return 'media recovered';
 }
 
 export const trashMediaFn = async (files) => {
-    const client = await pool.connect();
-    await client.query('BEGIN')
-    // console.log()
     for (const file of files) {
-        const { fileName, url, size, type, fileId, id } = file
-        console.log(fileName, url, size, type, fileId)
-        const query1 = `update files set is_trashed = $1 where id = $2`
-        await client.query(query1, [true, fileId])
-
-        const query2 = `insert into trash (file_name, file_url, size, user_id, file_type, file_id) values ($1, $2, $3, $4, $5, $6)`
-        await client.query(query2, [fileName, url, size, id, type, fileId])
+        const { fileId } = file;
+        const curr_timestamp = new Date().toISOString()
+        const query = `UPDATE files SET is_trashed = $1, trashed_at = $2 WHERE id = $3`;
+        await pool.query(query, [true, curr_timestamp, fileId]);
     }
-    await client.query('COMMIT')
-    const message = 'media trashed'
-    return message
+
+    return 'media trashed';
 }
 
 export const getTrashedFilesFn = async (userId) => {
@@ -207,8 +214,8 @@ export const getTrashedFilesFn = async (userId) => {
         return msg
     }
 
-    const query = `select * from trash where user_id = $1`
-    const trashedMedia = await pool.query(query, [userId])
+    const query = `select * from files where user_id = $1 and is_trashed = $2`;
+    const trashedMedia = await pool.query(query, [userId, true])
     // console.log(trashedMedia.rows)
     return trashedMedia.rows
 }
