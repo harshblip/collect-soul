@@ -34,6 +34,7 @@ export const loginUser = async (req, res) => {
     try {
         if (ans) {
             const passwordCheck = bcrypt.compare(password, ans.password_hash, () => {});
+            // const passwordCheck = true
 
             const now = new Date();
             if (ans.locked_until && now < ans.locked_until) {

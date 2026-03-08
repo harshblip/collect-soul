@@ -123,7 +123,7 @@ updateRoute.post('/enableAutoDelete', [
         return res.status(400).json({ message: errors[0].msg })
     }
     const message = await enableDelete(req, res);
-    console.log("enableDelete", message)
+    // console.log("enableDelete", message)
     return message;
 })
 

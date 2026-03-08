@@ -164,7 +164,7 @@ export const enableDelete = async (req, res) => {
         const mesquery = `select auto_cleanup_enabled from users where id = $1`
         const msg = await pool.query(mesquery, [userId])
         console.log("messagerows", msg.rows[0].auto_cleanup_enabled)
-        return res.status(200).json({ message: mag === false ? "auto delete disabled" : "auto delete enabled" })
+        return res.status(200).json({ message: msg === false ? "auto delete disabled" : "auto delete enabled" })
     } catch (err) {
         return res.status(500).json({ message: err.message })
     }
