@@ -8,7 +8,7 @@ import { authenticateToken as auth} from '../../middlewares/authMiddleware.js'
 
 const fetchRoute = express.Router()
 
-fetchRoute.get('/searchResults', [
+fetchRoute.get('/searchResults', auth, [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
     query('words').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("words should be in text format"),
 ], async (req, res) => {
@@ -23,7 +23,7 @@ fetchRoute.get('/searchResults', [
     return message
 })
 
-fetchRoute.get('/getSuggestions', [
+fetchRoute.get('/getSuggestions', auth, [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
     query('words').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("words should be in text format"),
 ], async (req, res) => {
@@ -38,7 +38,7 @@ fetchRoute.get('/getSuggestions', [
     return message
 })
 
-fetchRoute.get('/getStars', [
+fetchRoute.get('/getStars', auth, [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
 ], async (req, res) => {
     const errors = validationResult(req);
@@ -51,7 +51,7 @@ fetchRoute.get('/getStars', [
     return message
 })
 
-fetchRoute.get('/getFileInfo', [
+fetchRoute.get('/getFileInfo', auth, [
     query('user_id').trim().escape().isInt().withMessage("user_id should be a number"),
 ], async (req, res) => {
     const errors = validationResult(req);
@@ -78,7 +78,7 @@ fetchRoute.get('/getAllFiles', auth, [
     return message
 })
 
-fetchRoute.get('/getRecentlyOpened', [
+fetchRoute.get('/getRecentlyOpened', auth, [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
 ], async (req, res) => {
     const errors = validationResult(req);
@@ -91,7 +91,7 @@ fetchRoute.get('/getRecentlyOpened', [
     return message
 })
 
-fetchRoute.get('/getTrashedFiles', [
+fetchRoute.get('/getTrashedFiles', auth, [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
 ], async(req, res) => {
     const errors = validationResult(req);
@@ -104,7 +104,7 @@ fetchRoute.get('/getTrashedFiles', [
     return message
 })
 
-fetchRoute.get('/folderItems', [
+fetchRoute.get('/folderItems', auth, [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
     query('folderId').trim().escape().isInt().withMessage("folderId should be a number")
 ], async (req, res) => {
@@ -118,7 +118,7 @@ fetchRoute.get('/folderItems', [
     return message
 })
 
-fetchRoute.get('/getFolders', [
+fetchRoute.get('/getFolders', auth, [
     query('id').trim().escape().isInt().withMessage("id should be a number")
 ], async (req, res) => {
     const errors = validationResult(req);
@@ -131,7 +131,7 @@ fetchRoute.get('/getFolders', [
     return message
 })
 
-fetchRoute.get('/getTrashStatus', [
+fetchRoute.get('/getTrashStatus', auth, [
     query('userId').trim().escape().isInt().withMessage("userId should be a number"),
 ], async (req, res) => {
     const errors = validationResult(req);

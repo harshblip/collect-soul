@@ -22,7 +22,7 @@ authRoute.post('/signup', limiter, [
     return message
 })
 
-authRoute.get('/login', [
+authRoute.get('/login', limiter, [
     query('email').trim().escape().isEmail().withMessage("email is not valid"),
 ], async (req, res) => {
     const errors = validationResult(req);
