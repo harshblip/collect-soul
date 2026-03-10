@@ -15,7 +15,7 @@ export const getFileInfo = async (user_id, id) => {
     let path = []
     console.log(images)
 
-    if(images.folder_id){
+    if (images.folder_id) {
         await findFolder(images.folder_id, path)
     }
 
@@ -200,7 +200,7 @@ export const recoverMediaFn = async (files) => {
 export const trashMediaFn = async (files) => {
     for (const file of files) {
         const { fileId } = file;
-        const curr_timestamp = new Date().toISOString()
+        const curr_timestamp = new Date()
         const query = `UPDATE files SET is_trashed = $1, trashed_at = $2 WHERE id = $3`;
         await pool.query(query, [true, curr_timestamp, fileId]);
     }
@@ -214,7 +214,7 @@ export const getTrashedFilesFn = async (userId) => {
         return msg
     }
 
-    const query = `select * from files where user_id = $1 and is_trashed = $2`;
+    const query = `select * from files where user_id = $1 and is_trashed = $2 order by trashed_at desc`;
     const trashedMedia = await pool.query(query, [userId, true])
     // console.log(trashedMedia.rows)
     return trashedMedia.rows
