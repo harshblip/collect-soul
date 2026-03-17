@@ -33,7 +33,7 @@ export const loginUser = async (req, res) => {
     console.log("ans", ans, checked);
     try {
         if (ans) {
-            const passwordCheck = bcrypt.compare(password, ans.password_hash, () => {});
+            const passwordCheck = await bcrypt.compare(password, ans.password);
             // const passwordCheck = true
 
             const now = new Date();
@@ -51,9 +51,8 @@ export const loginUser = async (req, res) => {
 
             // console.log(payload)
             if (passwordCheck) {
-                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '7d' })
+                const access_token = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: '2h' })
                 const refresh_token = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: checked === true ? '7d' : '1d' });
-
                 res.cookie('refreshToken', refresh_token, {
                     httpOnly: true,
                     // secure: true,    
