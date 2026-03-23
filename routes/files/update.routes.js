@@ -2,7 +2,7 @@ import express from 'express'
 import { updateLastSeen } from '../../media/controllers/activity.controller.js';
 import { body, validationResult } from 'express-validator';
 import { enableDelete, recoverMedia, renameMedia, starFile, trashMedia } from '../../media/controllers/media.controller.js';
-import { addFilestoFolder, createFolder } from '../../media/controllers/folder.controller.js';
+import { addFilestoFolder, createFolder, restoreFolder, trashFolder } from '../../media/controllers/folder.controller.js';
 import { lockFile, unlockFile } from '../../media/controllers/lock.controller.js';
 import uploadRoute from './upload.routes.js';
 import { addFilestoFolderFn } from '../../media/services/folder.service.js';
@@ -42,6 +42,34 @@ updateRoute.post('/createFolder', [
 updateRoute.post('/trashMedia', trashMedia)
 
 uploadRoute.post('/recoverMedia', recoverMedia)
+
+updateRoute.post('/trashFolder', [
+    body('userId').trim().escape().isInt().withMessage("userId should be a number"),
+    body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
+], async(req, res) => {
+    const error = validationResult(req);
+    const errors = error.array();
+    console.log(errors)
+    if (!error.isEmpty()) {
+        return res.status(400).json({ message: errors[0].msg })
+    }
+    const message = await trashFolder(req, res);
+    return message 
+})
+
+updateRoute.post('/recoverFolder', [
+    body('userId').trim().escape().isInt().withMessage("userId should be a number"),
+    body('folderId').trim().escape().isInt().withMessage("folderId should be a number")
+], async(req, res) => {
+    const error = validationResult(req);
+    const errors = error.array();
+    console.log(errors)
+    if (!error.isEmpty()) {
+        return res.status(400).json({ message: errors[0].msg })
+    }
+    const message = await restoreFolder(req, res);
+    return message 
+})
 
 updateRoute.post('/lockfile', [
     body('password').trim().escape().matches(/^[a-zA-Z0-9_. -]+$/).withMessage("password should be in text format"),

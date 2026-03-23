@@ -1,6 +1,6 @@
 import { upload } from '../../middlewares/fileChecker.js';
 import { pool, s3 } from '../../config/db.js';
-import { addFilestoFolderFn } from '../services/folder.service.js';
+import { addFilestoFolderFn, trashFolderFn, restoreFolderFn } from '../services/folder.service.js';
 
 export const createFolder = async (req, res) => {
     const { id, name, description, is_locked, password, parent_id } = req.body;
@@ -77,6 +77,28 @@ export const folderItems = async (req, res) => {
         const result = await pool.query(query, [userId, folderId])
         res.status(200).json({ message: result.rows })
     } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+export const trashFolder = async (req, res) => {
+    const { userId, folderId } = req.body
+    try {
+        const message = await trashFolderFn(userId, folderId)
+        return res.status(200).json({ message: message })
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: err.message })
+    }
+}
+
+export const restoreFolder = async (req, res) => {
+    const { userId, folderId } = req.body
+    try {
+        const message = await restoreFolderFn(userId, folderId)
+        return res.status(200).json({ message: message })
+    } catch (err) {
+        console.error(err);
         return res.status(500).json({ message: err.message })
     }
 }

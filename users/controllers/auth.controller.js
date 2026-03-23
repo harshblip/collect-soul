@@ -45,7 +45,7 @@ export const loginUser = async (req, res) => {
 
             const payload = {
                 id: ans.id,
-                email: ans.email,  
+                email: ans.email,
                 username: ans.username,
             }
 
@@ -59,6 +59,9 @@ export const loginUser = async (req, res) => {
                     sameSite: 'Strict',
                     maxAge: checked === true ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000
                 })
+                const lockoutLevel = 0
+                const query = `update users set lockout_level = $1, locked_until = $3 where email = $2`
+                await pool.query(query, [lockoutLevel, email, null])
                 return res.status(200).json({ message: access_token })
             } else {
                 let failedAttempts = ans.failed_attempts + 1;

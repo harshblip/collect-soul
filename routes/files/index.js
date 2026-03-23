@@ -1,3 +1,4 @@
+import cors from 'cors'
 import express from 'express'
 import dotenv from 'dotenv'
 import deleteRoute from './delete.routes.js'
@@ -8,6 +9,11 @@ import uploadRoute from './upload.routes.js'
 
 dotenv.config()
 const fileRouter = express.Router()
+
+fileRouter.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
 
 fileRouter.use(deleteRoute)
 fileRouter.use(fetchRoute)

@@ -12,8 +12,11 @@ dotenv.config()
 const app = express();
 const port = 4000;
 
-app.use(cors());
-trashCleanup()
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
+// trashCleanup()
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
