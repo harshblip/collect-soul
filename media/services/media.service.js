@@ -214,7 +214,41 @@ export const getTrashedFilesFn = async (userId) => {
         return msg
     }
 
-    const query = `select * from files where user_id = $1 and is_trashed = $2 order by trashed_at desc`;
+    const query = `SELECT 
+            id,
+            user_id,
+            file_name,
+            file_type,
+            file_url,
+            is_locked,
+            password,
+            folder_id,
+            created_at,
+            starred,
+            trashed_at,
+            is_trashed,
+            size
+        FROM files
+        WHERE user_id = $1 and is_trashed = $2 and folder_id is null
+        UNION ALL
+        SELECT 
+            id,
+            user_id,
+            file_name,
+            null as file_url,
+            'folder' AS file_type,
+            is_locked,
+            password,
+            0 as folder_id,
+            created_at,
+            starred,
+            trashed_at,
+            is_trashed,
+            size
+        FROM folders
+        WHERE user_id = $1 and is_trashed = $2
+        ORDER BY trashed_at DESC
+        `;
     const trashedMedia = await pool.query(query, [userId, true])
     // console.log(trashedMedia.rows)
     return trashedMedia.rows

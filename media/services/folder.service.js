@@ -25,12 +25,13 @@ export const trashFolderFn = async(userId, folderId) => {
     if (folderIds.length === 0) {
         throw new Error('Folder not found or does not belong to user');
     }
+    const curr_timestamp = new Date()
+    const updateFoldersQuery = `UPDATE folders SET is_trashed = true, trashed_at = $3 WHERE id = ANY($1) AND user_id = $2;
+`;
+    await pool.query(updateFoldersQuery, [folderIds, userId, curr_timestamp]);
 
-    const updateFoldersQuery = `UPDATE folders SET is_trashed = true WHERE id = ANY($1) AND user_id = $2`;
-    await pool.query(updateFoldersQuery, [folderIds, userId]);
-
-    const updateFilesQuery = `UPDATE files SET is_trashed = true WHERE folder_id = ANY($1) AND user_id = $2`;
-    await pool.query(updateFilesQuery, [folderIds, userId]);
+    const updateFilesQuery = `UPDATE files SET is_trashed = true, trashed_at = $3 WHERE folder_id = ANY($1) AND user_id = $2`;
+    await pool.query(updateFilesQuery, [folderIds, userId, curr_timestamp]);
 
     const message = `Folder and all contents moved to trash successfully`;
     return message;
