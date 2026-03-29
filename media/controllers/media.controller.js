@@ -5,46 +5,45 @@ import { deleteMediaFn, getFileInfo, getTrashedFilesFn, recoverMediaFn, renameMe
 let message = ''
 
 export const postMedia = async (req, res) => {
-    return new Promise((res, rej) => {
-        upload.array('file')(req, res, async (err) => {
-            if (err) {
-                console.log("multer validation error: ", err.message);
-                console.error(err);
-                return { message: err.message }
-            }
-            try {
-                // console.log("yooohoooo", req.body)
-                const username = req.body.username
-                const userId = req.body.userId
-                const files = req.files;
-                const userFolderKey = `${username}`;
-
-                const listParams = {
-                    Bucket: process.env.S3_BUCKET_NAME,
-                    Prefix: userFolderKey,
-                    MaxKeys: 1,
-                }
-
-                const existingFolder = await s3.listObjectsV2(listParams).promise();
-
-                if (existingFolder.Contents.length === 0) {
-                    await s3.putObject({
-                        Bucket: process.env.S3_BUCKET_NAME,
-                        Key: userFolderKey,
-                    }).promise();
-                }
-
-                for (const file of files) {
-                    await uploadFileFn(file, username, userId, message)
-                }
-
-                return { message: message }
-            } catch (err) {
-                console.error(err);
-                return { message: err.message }
-            }
+    const runUpload = () => new Promise((resolve, reject) => {
+        upload.array('file')(req, res, (err) => {
+            if (err) reject(err);
+            else resolve();
         });
-    })
+    });
+
+    try {
+        await runUpload();
+
+        const { username, userId } = req.body;
+        const files = req.files;
+        const userFolderKey = `${username}`;
+
+        const listParams = {
+            Bucket: process.env.S3_BUCKET_NAME,
+            Prefix: userFolderKey,
+            MaxKeys: 1,
+        };
+
+        const existingFolder = await s3.listObjectsV2(listParams).promise();
+
+        if (existingFolder.Contents.length === 0) {
+            await s3.putObject({
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: userFolderKey,
+            }).promise();
+        }
+
+        for (const file of files) {
+            await uploadFileFn(file, username, userId);
+        }
+
+        return res.status(200).json({ message: 'Files uploaded successfully' });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: err.message });
+    }
 };
 
 
