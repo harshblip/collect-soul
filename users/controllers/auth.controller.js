@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { pool } from "../../config/db.js";
 import bcrypt from 'bcrypt'
+import { formatSeconds } from "../utils/formatter.js";
 
 let message = ''
 
@@ -39,7 +40,7 @@ export const loginUser = async (req, res) => {
             const now = new Date();
             if (ans.locked_until && now < ans.locked_until) {
                 const remaining = Math.ceil((ans.locked_until - now) / 1000);
-                message = `Account locked. Try again in ${remaining}s`
+                message = `Account locked. Try again in ${formatSeconds(remaining)}`
                 return res.status(403).json({ message })
             }
 
